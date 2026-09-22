@@ -1,0 +1,10 @@
+{
+  "description": "Creates interactive prototypes from detailed designs to help teams visualize and test concepts before development, enhancing collaboration and efficiency.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
