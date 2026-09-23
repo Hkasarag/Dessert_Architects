@@ -2,81 +2,55 @@ import { useState } from 'react'
 
 const plans = [
   {
-    id: 'starter',
-    name: 'Sweet Starter',
-    price: 24,
+    id: 'basic',
+    name: 'Sweet Savings',
+    price: 4,
     period: 'month',
-    treats: 4,
-    emoji: '🧁',
+    emoji: '🍪',
     color: '#E8F5FF',
     accent: '#6BBFD8',
     popular: false,
-    discount: '10% off all orders',
+    savings: 'Save on your favorite treats',
     perks: [
-      '4 freshly baked treats per week',
-      '10% discount on additional orders',
-      'Early access to new items',
-      'Monthly personalized recipe card',
+      '1 FREE bakery item every month',
+      'Choose from cookies, brownies, cupcakes, muffins, and more',
+      'Pays for itself after a single redemption',
+      'Cancel anytime',
     ],
   },
   {
-    id: 'monthly',
-    name: 'Monthly Dessert Box',
-    price: 36,
+    id: 'mystery',
+    name: 'Mystery Box Club',
+    price: 6,
     period: 'month',
-    treats: 6,
-    emoji: '📦',
+    emoji: '🎁',
     color: '#FFF8E0',
     accent: '#F4A361',
-    popular: false,
-    discount: '12% off all orders',
+    popular: true,
+    savings: 'Discover something new every month',
     perks: [
-      '6 curated desserts delivered monthly',
-      '12% discount on all orders',
-      'Seasonal exclusive items included',
-      'Personalized flavor curation',
-      'Free delivery every week',
+      '1 FREE Mystery Box item every month',
+      'Try exclusive surprise creations',
+      'Perfect for adventurous dessert lovers',
+      'Cancel anytime',
     ],
   },
   {
     id: 'family',
-    name: 'Family Favorites Plan',
-    price: 49,
+    name: 'Family Treat Pass',
+    price: 16,
     period: 'month',
-    treats: 8,
     emoji: '🏡',
     color: '#F0FFF4',
     accent: '#4CAF50',
-    popular: true,
-    discount: '15% off all orders',
-    perks: [
-      '8 family-sized treats per week',
-      '15% discount on all orders',
-      'Free customization on cakes',
-      'Priority ordering for celebrations',
-      'Free delivery, always',
-      'Dedicated family concierge',
-    ],
-  },
-  {
-    id: 'vip',
-    name: 'Bakery VIP Club',
-    price: 79,
-    period: 'month',
-    treats: 12,
-    emoji: '👑',
-    color: '#F5F0FF',
-    accent: '#9C27B0',
     popular: false,
-    discount: '20% off all orders',
+    savings: 'Best value for families',
     perks: [
-      '12 premium treats per week',
-      '20% discount on everything',
-      'First access to ALL seasonal launches',
-      'Monthly private tasting event invite',
-      'Custom celebration cake (1/quarter)',
-      'White-glove delivery service',
-      'Direct baker phone line',
+      'FREE monthly bundle of 4 bakery items',
+      'Great for sharing with family and friends',
+      'Enjoy more treats for less',
+      'Perfect for birthdays, movie nights, and celebrations',
+      'Cancel anytime',
     ],
   },
 ]
@@ -93,9 +67,11 @@ export default function Subscriptions() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-3" style={{ fontFamily: 'Fraunces, serif' }}>Bakery Subscription Plans</h1>
-        <p className="text-lg" style={{ color: 'var(--muted-foreground)' }}>
-          Fresh treats delivered regularly. Cancel or pause anytime.
+        <h1 className="text-4xl font-bold mb-3">
+          Frosted Bakery Memberships
+        </h1>
+        <p className="text-lg">
+          Enjoy free treats every month, exclusive surprises, and bakery savings that pay for themselves.
         </p>
       </div>
 
@@ -129,16 +105,13 @@ export default function Subscriptions() {
                 ${plan.price}
                 <span className="text-base font-semibold text-[var(--muted-foreground)]">/{plan.period}</span>
               </div>
-              <div className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-                {plan.treats} treats per week
-              </div>
             </div>
 
             <div
               className="text-xs font-bold px-3 py-1.5 rounded-lg self-start"
               style={{ background: plan.accent + '22', color: plan.accent }}
             >
-              {plan.discount}
+              {plan.savings}
             </div>
 
             <ul className="space-y-2 flex-1">
@@ -155,7 +128,7 @@ export default function Subscriptions() {
               className="w-full py-3 rounded-2xl font-bold text-sm text-white transition hover:opacity-90 mt-2"
               style={{ background: added === plan.id ? '#4CAF50' : plan.accent }}
             >
-              {added === plan.id ? '✓ Added to Cart!' : 'Add Subscription to Cart'}
+              {added === plan.id ? '✓ Added to Cart!' : 'Start Membership'}
             </button>
           </div>
         ))}
@@ -166,9 +139,9 @@ export default function Subscriptions() {
         style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
       >
         <div className="text-2xl mb-3">🤝</div>
-        <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Fraunces, serif' }}>Not sure which plan is right for you?</h3>
+        <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Fraunces, serif' }}>Need help choosing?</h3>
         <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          Our Bakery Concierge can review your order history and recommend the best plan for your family.
+          Our Bakery Concierge can recommend the membership that gives you the most value based on your favorite treats and shopping habits.
         </p>
         <a
           href="/concierge"
