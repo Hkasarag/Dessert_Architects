@@ -6,7 +6,7 @@ type InventoryItem = {
   category: string
   unit: string
   currentStock: number
-  parLevel: number
+  parLevel: number  // Minimum stock level before reordering
   maxLevel: number
   unitCost: number
   supplier: string
