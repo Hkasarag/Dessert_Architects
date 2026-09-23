@@ -1,41 +1,69 @@
 import { useState, useRef, useEffect } from 'react'
+import {
+  executeAgentByIntent,
+  routeUserIntent,
+  type AgentIntent,
+} from '../agents/router'
 
 type Message = {
   id: number
   role: 'user' | 'assistant'
   text: string
   time: string
+  agentLabel?: string
+  jsonPayload?: string
 }
 
 const suggestions = [
-  'Recommend desserts for a birthday party',
-  'Suggest pastries for a family gathering',
-  'Help me create a dessert tray',
-  'Find treats similar to my previous orders',
-  'Recommend the best subscription plan',
-  'What seasonal items are available now?',
+  'What desserts should I get today?',
+  'What deals do you have?',
+  'I need desserts for 40 guests and a budget of $180.',
+  'What should I reorder?',
+  'Where is my order?',
+  'Do you have any peanut-free options?',
 ]
-
-const responses: Record<string, string> = {
-  'birthday': "🎂 Great choice! For a birthday party, I'd recommend our **Classic Birthday Cake (10-inch)** — it serves 16–20 guests and can be custom decorated. Pair it with our **Funfetti Cupcakes** for color and our **Macarons (6-pack)** as elegant party favors. That combination is our most popular birthday order. Shall I add any of these to your cart?",
-  'family': "🏡 For a family gathering, our **Family Celebration Package** is perfect — it includes a custom cake and 2 dozen mini cupcakes. I'd also suggest adding our **Butter Croissants** and **Cinnamon Rolls** for morning arrivals. Based on your order history, your family loves chocolate, so our **Dark Chocolate Brownies** would be a crowd-pleaser!",
-  'dessert tray': "🍰 A beautiful dessert tray! Here's what I recommend for variety and visual impact: **Macarons** (assorted colors), **Dark Chocolate Brownies** (cut into squares), **Snickerdoodles**, and **Lemon Scones** with clotted cream. This gives you 4 textures and flavor profiles that complement each other. Shall I build this order for you?",
-  'previous': "📋 Looking at your order history, you frequently order **Chocolate Chip Cookies**, **Birthday Cakes**, and **Croissants**. Since it's fall, I'd suggest trying our new **Pumpkin Spice Cake** — it's similar to your usual Birthday Cake order but with seasonal spices. Our **Apple Cider Donuts** are also new and I think you'll love them!",
-  'subscription': "📦 Based on your ordering frequency (about weekly), the **Family Favorites Plan** at $49/month is your best value — you're already spending about $60/week! It includes 8 treats weekly, 15% off all orders, and free delivery. If you'd like more variety, the **Bakery VIP Club** gives you early access to seasonal items. Which sounds right for your family?",
-  'seasonal': "🍂 This fall, we're featuring: **Pumpkin Spice Cake** (a customer favorite!), **Apple Cider Donuts**, **Peppermint Bark** (getting an early start!), and our special **Holiday Dessert Tray** with gingerbread and yule log. All seasonal items sell out quickly — subscribers get first access. Want me to set up a notification?",
-}
-
-function getResponse(input: string): string {
-  const lower = input.toLowerCase()
-  for (const [key, resp] of Object.entries(responses)) {
-    if (lower.includes(key)) return resp
-  }
-  return "🥐 That's a wonderful question! Let me help you find the perfect treats. Based on our bakery's menu and your preferences, I'd suggest starting with our **Personalized Recommendations** on the home page — I've tailored those selections just for you. You can also browse by category in the full menu. Is there a specific occasion, flavor, or dietary preference I can help narrow down?"
-}
 
 function formatTime() {
   const now = new Date()
   return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function summarizeIntent(intent: AgentIntent) {
+  const labels: Record<AgentIntent, string> = {
+    product_recommendation: 'Product Recommendation Agent',
+    promotion_recommendation: 'Promotion Recommendation Agent',
+    party_planning: 'Party Planner Agent',
+    franchise_reordering: 'Franchise Reordering Agent',
+    customer_service: 'Customer Service Agent',
+    cart_optimization: 'Cart Optimization Agent',
+    nutritional_allergy: 'Nutritional & Allergy Agent',
+    clarification_required: 'Orchestrator Agent',
+  }
+
+  return labels[intent]
+}
+
+function renderStructuredResponse(route: ReturnType<typeof routeUserIntent>, result: unknown) {
+  const intentLabel = summarizeIntent(route.intent)
+  const summaryMap: Record<AgentIntent, string> = {
+    product_recommendation: 'Recommended desserts based on customer behavior and verified catalog data.',
+    promotion_recommendation: 'Relevant active promotions matched to the customer profile and prior buying behavior.',
+    party_planning: 'Event order recommendation built from guest count, budget, and product pricing.',
+    franchise_reordering: 'Inventory reorder guidance based on safety stock, lead time, and sales velocity.',
+    customer_service: 'Support response grounded in order and policy data only.',
+    cart_optimization: 'Upsell and cross-sell recommendations based on basket affinity and inventory-backed products.',
+    nutritional_allergy: 'Restricted-ingredient filtering to recommend safe products only.',
+    clarification_required: 'The request needs a bit more clarification before routing.',
+  }
+
+  const summary = summaryMap[route.intent]
+  const json = JSON.stringify(result, null, 2)
+
+  return {
+    text: `${summary}\n\nRoute: ${intentLabel}\nConfidence: ${route.confidence.toFixed(2)}`,
+    jsonPayload: json,
+    agentLabel: intentLabel,
+  }
 }
 
 export default function Concierge() {
@@ -43,8 +71,9 @@ export default function Concierge() {
     {
       id: 0,
       role: 'assistant',
-      text: "👋 Hello! I'm your Bakery Concierge, here to help you discover the perfect treats. Whether you're planning a celebration, browsing for yourself, or looking for the best subscription — I'm here to help. What can I find for you today?",
+      text: "👋 Hello! I’m your bakery concierge and orchestrator. I can route your request to the right specialist agent for recommendations, promotions, event planning, inventory, order support, or dietary guidance.",
       time: formatTime(),
+      agentLabel: 'Orchestrator Agent',
     },
   ])
   const [input, setInput] = useState('')
@@ -57,65 +86,74 @@ export default function Concierge() {
 
   const send = (text: string) => {
     if (!text.trim()) return
+
     const userMsg: Message = { id: Date.now(), role: 'user', text, time: formatTime() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setTyping(true)
+
     setTimeout(() => {
+      const route = routeUserIntent(text)
+      const result = executeAgentByIntent(route.intent, text)
+      const assistantResponse = renderStructuredResponse(route, result)
+
+      const resp: Message = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        text: assistantResponse.text,
+        time: formatTime(),
+        agentLabel: assistantResponse.agentLabel,
+        jsonPayload: assistantResponse.jsonPayload,
+      }
+
       setTyping(false)
-      const resp: Message = { id: Date.now() + 1, role: 'assistant', text: getResponse(text), time: formatTime() }
       setMessages(prev => [...prev, resp])
-    }, 1200)
+    }, 1000)
   }
 
   return (
-    <div className="flex flex-col h-full max-w-3xl mx-auto px-6 py-8" style={{ height: 'calc(100vh - 64px)' }}>
-      {/* Header */}
+    <div className="flex flex-col h-full max-w-4xl mx-auto px-6 py-8" style={{ height: 'calc(100vh - 64px)' }}>
       <div className="mb-6 text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-md"
-          style={{ background: 'var(--primary)' }}
-        >
+        <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-md" style={{ background: 'var(--primary)' }}>
           🥐
         </div>
-        <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>How Can I Help Today?</h1>
+        <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>AI Dessert Concierge</h1>
         <p className="mt-2 text-base" style={{ color: 'var(--muted-foreground)' }}>
-          Your personal bakery assistant is here to find the perfect treats, subscriptions, and recommendations.
+          Routed by an orchestrator to specialized bakery agents for products, promotions, party planning, and support.
         </p>
       </div>
 
-      {/* Chat */}
-      <div
-        className="flex-1 rounded-3xl border overflow-hidden flex flex-col"
-        style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
-      >
+      <div className="flex-1 rounded-3xl border overflow-hidden flex flex-col" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {messages.map(msg => (
             <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
               {msg.role === 'assistant' && (
-                <div
-                  className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-lg mt-1"
-                  style={{ background: 'var(--primary)' }}
-                >🥐</div>
-              )}
-              <div className={`flex flex-col gap-1 max-w-[80%] ${msg.role === 'user' ? 'items-end' : ''}`}>
-                <div
-                  className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
-                  style={{
-                    background: msg.role === 'user' ? 'var(--primary)' : 'var(--muted)',
-                    color: msg.role === 'user' ? 'white' : 'var(--foreground)',
-                    borderBottomRightRadius: msg.role === 'user' ? '4px' : undefined,
-                    borderBottomLeftRadius: msg.role === 'assistant' ? '4px' : undefined,
-                  }}
-                >
-                  {msg.text.split('**').map((part, i) =>
-                    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                  )}
+                <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-lg mt-1" style={{ background: 'var(--primary)' }}>
+                  🥐
                 </div>
+              )}
+              <div className={`flex flex-col gap-1 max-w-[82%] ${msg.role === 'user' ? 'items-end' : ''}`}>
+                <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line" style={{
+                  background: msg.role === 'user' ? 'var(--primary)' : 'var(--muted)',
+                  color: msg.role === 'user' ? 'white' : 'var(--foreground)',
+                  borderBottomRightRadius: msg.role === 'user' ? '4px' : undefined,
+                  borderBottomLeftRadius: msg.role === 'assistant' ? '4px' : undefined,
+                }}>
+                  {msg.text}
+                </div>
+
+                {msg.jsonPayload && (
+                  <div className="w-full overflow-x-auto rounded-2xl border p-3 text-[11px] leading-5" style={{ background: '#111827', color: '#f3f4f6', borderColor: 'var(--border)' }}>
+                    <div className="mb-2 font-semibold text-[10px] uppercase tracking-wide" style={{ color: '#fbbf24' }}>{msg.agentLabel}</div>
+                    <pre className="whitespace-pre-wrap break-words m-0">{msg.jsonPayload}</pre>
+                  </div>
+                )}
+
                 <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{msg.time}</span>
               </div>
             </div>
           ))}
+
           {typing && (
             <div className="flex gap-3">
               <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-lg" style={{ background: 'var(--primary)' }}>🥐</div>
@@ -131,7 +169,6 @@ export default function Concierge() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggestions */}
         {messages.length <= 1 && (
           <div className="px-6 pb-4">
             <div className="text-xs font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>SUGGESTED QUESTIONS</div>
@@ -150,14 +187,13 @@ export default function Concierge() {
           </div>
         )}
 
-        {/* Input */}
         <div className="border-t p-4 flex gap-3" style={{ borderColor: 'var(--border)' }}>
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send(input)}
-            placeholder="Ask about treats, recommendations, subscriptions…"
+            placeholder="Ask about treats, recommendations, subscriptions, events, or inventory…"
             className="flex-1 px-4 py-3 rounded-2xl border text-sm outline-none"
             style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
           />
@@ -168,7 +204,8 @@ export default function Concierge() {
             style={{ background: 'var(--primary)' }}
           >
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
           </button>
         </div>
