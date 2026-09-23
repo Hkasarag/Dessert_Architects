@@ -1,6 +1,6 @@
 import { inventoryItems } from './types'
 
-export function franchiseReorderingAgent() {
+export function franchiseReorderingAgent(message: string) {
   const reorderItems = inventoryItems
     .filter(item => item.currentStock <= item.reorderThreshold)
     .map(item => ({

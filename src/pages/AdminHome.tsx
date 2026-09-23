@@ -69,7 +69,7 @@ export default function AdminHome() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-4xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Bulk Ingredient Ordering</h1>
-          <p className="mt-1" style={{ color: 'var(--muted-foreground)' }}>Order supplies directly from Crumb & Joy HQ. Bulk pricing applied automatically.</p>
+          <p className="mt-1" style={{ color: 'var(--muted-foreground)' }}>Order supplies directly from Frosted Corners HQ. Bulk pricing applied automatically.</p>
         </div>
         <div
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
@@ -249,6 +249,56 @@ export default function AdminHome() {
             </div>
           </div>
         </div>
+      </div>
+      {/* Admin Chat */}
+      <div className="rounded-2xl border p-5" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+        <h3 className="font-bold text-lg mb-3">Franchise Operations Assistant</h3>
+        <p className="text-sm mb-3" style={{ color: 'var(--muted-foreground)' }}>
+          Ask about inventory forecasts, promotions, reorder suggestions, and simulated promotion outcomes.
+        </p>
+        <AdminChat />
+      </div>
+    </div>
+  )
+}
+
+import { routeAdminIntent, executeAgentByIntent } from '../agents/router'
+
+function AdminChat() {
+  const [input, setInput] = useState('')
+  const [messages, setMessages] = useState<{ id: number; role: 'admin' | 'assistant'; text: string; payload?: string }[]>([])
+
+  const send = (text: string) => {
+    if (!text.trim()) return
+    const id = Date.now()
+    setMessages(prev => [...prev, { id, role: 'admin', text }])
+    setInput('')
+    const route = routeAdminIntent(text)
+    const result = executeAgentByIntent(route.intent, text, 'admin')
+    setTimeout(() => {
+      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: route.rationale, payload: JSON.stringify(result, null, 2) }])
+    }, 600)
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="w-full">
+        {messages.map(m => (
+          <div key={m.id} className="mb-2">
+            <div className={`text-sm font-semibold ${m.role === 'admin' ? 'text-right' : ''}`}>{m.role === 'admin' ? 'You' : 'Franchise Assistant'}</div>
+            <div className="rounded-xl p-3" style={{ background: m.role === 'admin' ? 'var(--muted)' : 'var(--card)' }}>
+              <div className="text-sm whitespace-pre-wrap">{m.text}</div>
+              {m.payload && (
+                <pre className="mt-2 text-xs p-2 rounded" style={{ background: '#0b1220', color: '#e6eef8' }}>{m.payload}</pre>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)} className="flex-1 px-3 py-2 rounded-xl border" />
+        <button onClick={() => send(input)} className="px-4 py-2 rounded-xl text-white" style={{ background: 'var(--primary)' }}>Send</button>
       </div>
     </div>
   )

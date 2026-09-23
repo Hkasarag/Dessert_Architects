@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   executeAgentByIntent,
-  routeUserIntent,
+  routeCustomerIntent,
   type AgentIntent,
 } from '../agents/router'
 
@@ -43,7 +43,7 @@ function summarizeIntent(intent: AgentIntent) {
   return labels[intent]
 }
 
-function renderStructuredResponse(route: ReturnType<typeof routeUserIntent>, result: unknown) {
+function renderStructuredResponse(route: ReturnType<typeof routeCustomerIntent>, result: unknown) {
   const intentLabel = summarizeIntent(route.intent)
   const summaryMap: Record<AgentIntent, string> = {
     product_recommendation: 'Recommended desserts based on customer behavior and verified catalog data.',
@@ -93,8 +93,8 @@ export default function Concierge() {
     setTyping(true)
 
     setTimeout(() => {
-      const route = routeUserIntent(text)
-      const result = executeAgentByIntent(route.intent, text)
+      const route = routeCustomerIntent(text)
+      const result = executeAgentByIntent(route.intent, text, 'customer')
       const assistantResponse = renderStructuredResponse(route, result)
 
       const resp: Message = {
