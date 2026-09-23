@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import type { CartItem } from '../App'
 
 const plans = [
   {
     id: 'basic',
+    cartId: -1,
     name: 'Sweet Savings',
     price: 4,
     period: 'month',
@@ -20,6 +22,7 @@ const plans = [
   },
   {
     id: 'mystery',
+    cartId: -2,
     name: 'Mystery Box Club',
     price: 6,
     period: 'month',
@@ -37,6 +40,7 @@ const plans = [
   },
   {
     id: 'family',
+    cartId: -3,
     name: 'Family Treat Pass',
     price: 16,
     period: 'month',
@@ -55,12 +59,23 @@ const plans = [
   },
 ]
 
-export default function Subscriptions() {
+type Props = {
+  addToCart: (item: Omit<CartItem, 'quantity'>) => void
+}
+
+export default function Subscriptions({ addToCart }: Props) {
   const [selected, setSelected] = useState<string | null>(null)
   const [added, setAdded] = useState<string | null>(null)
 
-  const handleAdd = (id: string) => {
-    setAdded(id)
+  const handleAdd = (plan: typeof plans[number]) => {
+    addToCart({
+      id: plan.cartId,
+      name: `${plan.name} Membership`,
+      price: plan.price,
+      image: '',
+      isSubscription: true,
+    })
+    setAdded(plan.id)
     setTimeout(() => setAdded(null), 2000)
   }
 
@@ -124,7 +139,7 @@ export default function Subscriptions() {
             </ul>
 
             <button
-              onClick={e => { e.stopPropagation(); handleAdd(plan.id) }}
+              onClick={e => { e.stopPropagation(); handleAdd(plan) }}
               className="w-full py-3 rounded-2xl font-bold text-sm text-white transition hover:opacity-90 mt-2"
               style={{ background: added === plan.id ? '#4CAF50' : plan.accent }}
             >

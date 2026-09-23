@@ -90,11 +90,15 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
                     ${item.price.toFixed(2)} each
                   </div>
                 </div>
-                <div className="flex items-center gap-1 rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
-                  <button className="w-9 h-9 flex items-center justify-center text-lg font-bold hover:bg-[var(--muted)] transition" onClick={() => updateQty(item.id, -1)}>−</button>
-                  <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                  <button className="w-9 h-9 flex items-center justify-center text-lg font-bold hover:bg-[var(--muted)] transition" onClick={() => updateQty(item.id, 1)}>+</button>
-                </div>
+                {item.isSubscription ? (
+                  <span className="text-sm font-semibold px-3" style={{ color: 'var(--muted-foreground)' }}>1 membership</span>
+                ) : (
+                  <div className="flex items-center gap-1 rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
+                    <button className="w-9 h-9 flex items-center justify-center text-lg font-bold hover:bg-[var(--muted)] transition" onClick={() => updateQty(item.id, -1)}>−</button>
+                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                    <button className="w-9 h-9 flex items-center justify-center text-lg font-bold hover:bg-[var(--muted)] transition" onClick={() => updateQty(item.id, 1)}>+</button>
+                  </div>
+                )}
                 <div className="text-right min-w-[70px]">
                   <div className="font-bold">${(item.price * item.quantity).toFixed(2)}</div>
                 </div>

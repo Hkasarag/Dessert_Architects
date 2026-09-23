@@ -22,6 +22,7 @@ export type CartItem = {
   price: number
   quantity: number
   image: string
+  isSubscription?: boolean
 }
 
 function AuthGate() {
@@ -40,7 +41,10 @@ function AppShell() {
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     setCartItems(prev => {
       const existing = prev.find(i => i.id === item.id)
-      if (existing) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
+      if (existing) {
+        if (item.isSubscription) return prev
+        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
+      }
       return [...prev, { ...item, quantity: 1 }]
     })
   }
@@ -74,7 +78,7 @@ function AppShell() {
             <Route path="/thankyou" element={<ThankYou />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/concierge" element={<Concierge />} />
-            <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/subscriptions" element={<Subscriptions addToCart={addToCart} />} />
             {user.role === 'admin' && (
               <>
                 <Route path="/analytics" element={<Analytics />} />
