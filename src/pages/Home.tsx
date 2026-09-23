@@ -144,7 +144,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
           <div className="text-center py-20">
             <div className="text-5xl mb-4">🔍</div>
             <p className="text-lg font-semibold mb-2">No treats found for "{searchQuery}"</p>
-            <p style={{ color: 'var(--muted-foreground)' }}>Try searching for "chocolate", "croissant", or "birthday"</p>
+            <p style={{ color: 'var(--muted-foreground)' }}>Try searching for "brownies", "cookies", or "cupcakes"</p>
             <button onClick={() => navigate('/menu')} className="mt-6 px-6 py-3 rounded-2xl font-bold text-white" style={{ background: 'var(--primary)' }}>
               Browse Full Menu
             </button>

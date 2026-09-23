@@ -3,6 +3,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
 import { menuProducts } from '../data/menuProducts'
+import { getIngredientProduct } from '../data/IngredientProducts'
 
 const salesData = [
   { month: 'Apr', revenue: 18400, orders: 312 },
@@ -58,6 +59,27 @@ const kpis = [
   { label: 'Subscriptions', value: '214 active', change: '+14.1%', up: true, icon: '📦' },
   { label: 'Inventory Health', value: 'Good', change: '1 alert', up: false, icon: '🏭' },
 ]
+
+const inventoryHealthRows = [
+  { ingredientId: 2, runout: 'Oct 8' },
+  { ingredientId: 24, runout: 'Sep 29' },
+  { ingredientId: 14, runout: 'Oct 15' },
+  { ingredientId: 5, runout: 'Oct 3' },
+  { ingredientId: 6, runout: 'Sep 27' },
+].flatMap(({ ingredientId, runout }) => {
+  const ingredient = getIngredientProduct(ingredientId)
+  if (!ingredient) return []
+
+  const ratio = ingredient.currentStock / ingredient.parLevel
+  const status = ratio <= 0.3 ? 'Critical' : ratio < 1 ? 'Low' : 'Good'
+  return [{
+    name: ingredient.name,
+    stock: `${ingredient.currentStock} ${ingredient.unit}`,
+    runout,
+    status,
+    color: status === 'Critical' ? 'red' : status === 'Low' ? 'amber' : 'green',
+  }]
+})
 
 function KpiCard({ kpi }: { kpi: typeof kpis[0] }) {
   return (
@@ -208,13 +230,7 @@ export default function Analytics() {
               </tr>
             </thead>
             <tbody>
-              {[
-                { name: 'All-Purpose Flour', stock: '42 lbs', runout: 'Oct 8', status: 'Good', color: 'green' },
-                { name: 'Vanilla Extract', stock: '2.4 L', runout: 'Sep 29', status: 'Low', color: 'amber' },
-                { name: 'Chocolate (Callebaut)', stock: '18 kg', runout: 'Oct 15', status: 'Good', color: 'green' },
-                { name: 'Butter', stock: '32 lbs', runout: 'Oct 3', status: 'Good', color: 'green' },
-                { name: 'Cream Cheese', stock: '4 lbs', runout: 'Sep 27', status: 'Critical', color: 'red' },
-              ].map(row => (
+              {inventoryHealthRows.map(row => (
                 <tr key={row.name} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="py-3 px-3 font-semibold">{row.name}</td>
                   <td className="py-3 px-3">{row.stock}</td>
