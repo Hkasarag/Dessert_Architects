@@ -250,6 +250,7 @@ export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
       id: p.id,
       name: p.name,
       price: p.price,
+      unitCost: p.unitCost,
       image: `https://images.unsplash.com/${p.image}?w=200&h=200&fit=crop&auto=format`,
     })
     setAdded(p.id)

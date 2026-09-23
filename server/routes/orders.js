@@ -28,7 +28,7 @@ const buildOrder = body => {
     !isFiniteNumber(item.unitPrice) ||
     item.unitPrice < 0 ||
     !isFiniteNumber(item.unitCost) ||
-    item.unitCost < 0
+    item.unitCost <= 0
   )) {
     return { error: "Each order item must have valid product and pricing details." };
   }

@@ -20,6 +20,7 @@ export type CartItem = {
   id: number
   name: string
   price: number
+  unitCost: number
   quantity: number
   image: string
   isSubscription?: boolean

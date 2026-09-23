@@ -19,6 +19,7 @@ const promotions = [
     color: '#FFF4E0',
     accent: '#F4A361',
     price: 18.00,
+    unitCost: 5.76,
   },
   {
     id: 'p2',
@@ -30,6 +31,7 @@ const promotions = [
     color: '#E8F5E9',
     accent: '#4CAF50',
     price: 42.00,
+    unitCost: 13.20,
   },
   {
     id: 'p3',
@@ -41,6 +43,7 @@ const promotions = [
     color: '#EDE7F6',
     accent: '#9C27B0',
     price: 68.00,
+    unitCost: 23.80,
   },
 ]
 
@@ -245,7 +248,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
                 <button
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
                   style={{ background: p.accent }}
-                  onClick={() => addToCart({ id: parseInt('9' + p.id.replace('p', '')), name: p.name, price: p.price, unitCost: 9999999999999, image: '' })}
+                  onClick={() => addToCart({ id: parseInt('9' + p.id.replace('p', '')), name: p.name, price: p.price, unitCost: p.unitCost, image: '' })}
                 >
                   Add To Cart
                 </button>

@@ -67,7 +67,7 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
         productName: item.name,
         quantity: item.quantity,
         unitPrice: item.price,
-        unitCost: 0,
+        unitCost: item.unitCost,
       })),
     }
 
