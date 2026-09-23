@@ -86,6 +86,7 @@ export default function AdminHome() {
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
 
   const filtered = items.filter(i =>
     (activeCategory === 'All' || i.category === activeCategory) &&
@@ -96,13 +97,51 @@ export default function AdminHome() {
   const cart = items.filter(i => i.qty > 0)
   const total = cart.reduce((s, i) => s + i.qty * i.unitPrice, 0)
   const totalItems = cart.reduce((s, i) => s + i.qty, 0)
-  const handleSubmit = () => {
-    if (cart.length === 0) return
-    setSubmitted(true)
-    setTimeout(() => {
-      setItems(catalog.map(i => ({ ...i, qty: 0 })))
-      setSubmitted(false)
-    }, 3000)
+  const submitOrder = async () => {
+    const cartItems = items.filter(item => item.qty > 0)
+    if (cartItems.length === 0) return
+
+    setCheckoutError('')
+    setSubmitted(false)
+
+    const inventory = {
+      inventoryTransactionId: '',
+      locationId: 'ATL001',
+      transactionDate: new Date().toISOString(),
+      transactionType: 'Purchase',
+      totalCost: total,
+      lineItems: cartItems.map(item => ({
+        ingredientId: `ING-${String(item.id).padStart(3, '0')}`,
+        ingredientName: item.name.split(' (')[0].toLowerCase().replace(/\s+/g, '_'),
+        category: item.category,
+        quantity: item.qty,
+        unitOfMeasure: item.unit,
+        unitCost: item.unitPrice,
+        extendedCost: item.qty * item.unitPrice,
+        lotNumber: null,
+        expirationDate: null,
+        storageLocation: item.category === 'Dairy' ? 'Cold Storage' : 'Dry Storage',
+      })),
+      createdAt: '',
+    }
+
+    try {
+      const response = await fetch('http://localhost:5050/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inventory),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to create the inventory transaction.')
+      }
+
+      setItems(catalog.map(item => ({ ...item, qty: 0 })))
+      setSubmitted(true)
+      setTimeout(() => setSubmitted(false), 3000)
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Unable to create the inventory transaction.')
+    }
   }
 
   return (
@@ -161,7 +200,8 @@ export default function AdminHome() {
               <div className="flex justify-between text-sm"><span style={{ color: 'var(--muted-foreground)' }}>Bulk discount (12%)</span><span className="font-semibold text-green-600">−${(total * 0.12).toFixed(2)}</span></div>
               <div className="flex justify-between font-bold text-base pt-2"><span>Total</span><span>${(total * 0.88).toFixed(2)}</span></div>
             </div>
-            <button onClick={handleSubmit} disabled={cart.length === 0} className="w-full mt-4 py-3 rounded-2xl font-bold text-sm text-white transition hover:opacity-90 disabled:opacity-40" style={{ background: submitted ? '#4CAF50' : 'var(--primary)' }}>{submitted ? '✓ Order Submitted to HQ!' : 'Submit Bulk Order'}</button>
+            <button onClick={submitOrder} disabled={cart.length === 0 || submitted} className="w-full mt-4 py-3 rounded-2xl font-bold text-sm text-white transition hover:opacity-90 disabled:opacity-40" style={{ background: submitted ? '#4CAF50' : 'var(--primary)' }}>{submitted ? '✓ Order Submitted to HQ!' : 'Checkout'}</button>
+            {checkoutError && <p className="text-xs text-center mt-2 text-red-600">{checkoutError}</p>}
             {submitted && <p className="text-xs text-center mt-2" style={{ color: '#4CAF50' }}>Confirmation email sent. Delivery in 2–3 business days.</p>}
           </div>
           <div className="rounded-2xl border p-5" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
