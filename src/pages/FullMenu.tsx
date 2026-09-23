@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { CartItem } from '../App'
+import { isInSeason, menuProducts } from '../data/menuProducts'
 
 type Props = { addToCart: (item: Omit<CartItem, 'quantity'>) => void; searchQuery?: string }
 
@@ -11,25 +12,7 @@ const tabs = [
   'Pastries',
   'Seasonal'
 ]
-const today = new Date()
-
-const getCurrentSeason = () => {
-  const month = new Date().getMonth() + 1
-
-  if (month >= 3 && month <= 5) return 'Spring'
-  if (month >= 6 && month <= 8) return 'Summer'
-  if (month >= 9 && month <= 11) return 'Fall'
-
-  return 'Winter'
-}
-
-const isInSeason = (season: string) => {
-  if (season === 'All Year') return true
-  return season === getCurrentSeason()
-}
-
-
-const allProducts = [
+const legacyProducts = [
   // COOKIES
   {
     id: 1,
@@ -236,6 +219,8 @@ const allProducts = [
     season: 'All Year'
   }
 ]
+
+const allProducts = menuProducts
 
 export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
   const [activeTab, setActiveTab] = useState('All')

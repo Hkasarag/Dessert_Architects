@@ -17,12 +17,23 @@ const suggestions = [
 ]
 
 const responses: Record<string, string> = {
-  'birthday': "🎂 Great choice! For a birthday party, I'd recommend our **Classic Birthday Cake (10-inch)** — it serves 16–20 guests and can be custom decorated. Pair it with our **Funfetti Cupcakes** for color and our **Macarons (6-pack)** as elegant party favors. That combination is our most popular birthday order. Shall I add any of these to your cart?",
-  'family': "🏡 For a family gathering, our **Family Celebration Package** is perfect — it includes a custom cake and 2 dozen mini cupcakes. I'd also suggest adding our **Butter Croissants** and **Cinnamon Rolls** for morning arrivals. Based on your order history, your family loves chocolate, so our **Dark Chocolate Brownies** would be a crowd-pleaser!",
-  'dessert tray': "🍰 A beautiful dessert tray! Here's what I recommend for variety and visual impact: **Macarons** (assorted colors), **Dark Chocolate Brownies** (cut into squares), **Snickerdoodles**, and **Lemon Scones** with clotted cream. This gives you 4 textures and flavor profiles that complement each other. Shall I build this order for you?",
-  'previous': "📋 Looking at your order history, you frequently order **Chocolate Chip Cookies**, **Birthday Cakes**, and **Croissants**. Since it's fall, I'd suggest trying our new **Pumpkin Spice Cake** — it's similar to your usual Birthday Cake order but with seasonal spices. Our **Apple Cider Donuts** are also new and I think you'll love them!",
-  'subscription': "📦 Based on your ordering frequency (about weekly), the **Family Favorites Plan** at $49/month is your best value — you're already spending about $60/week! It includes 8 treats weekly, 15% off all orders, and free delivery. If you'd like more variety, the **Bakery VIP Club** gives you early access to seasonal items. Which sounds right for your family?",
-  'seasonal': "🍂 This fall, we're featuring: **Pumpkin Spice Cake** (a customer favorite!), **Apple Cider Donuts**, **Peppermint Bark** (getting an early start!), and our special **Holiday Dessert Tray** with gingerbread and yule log. All seasonal items sell out quickly — subscribers get first access. Want me to set up a notification?",
+  birthday:
+    "🎂 For a birthday celebration, I'd recommend a mix of our most popular treats: **Chocolate Chip Cookies**, **Chocolate Brownies**, and **Vanilla Cupcakes**. If you're celebrating during the current season, adding a few seasonal specialties like our **Carrot Cupcake**, **Pumpkin Brownie**, or **Peppermint Chocolate Cupcake** can make the dessert table even more memorable. Would you like recommendations based on your guest count?",
+
+  family:
+    "🏡 For a family gathering, our **Cinnamon Rolls** are always a crowd favorite, especially for brunches and morning events. Pair them with **Chocolate Chip Cookies**, **Snickerdoodle Cookies**, and **Chocolate Brownies** for a variety of flavors everyone can enjoy. If anyone prefers plant-based options, our **Vegan Banana Bread Muffin** is a great addition.",
+
+  'dessert tray':
+    "🍰 For a balanced dessert tray, I'd recommend **Chocolate Chip Cookies**, **Snickerdoodle Cookies**, **Chocolate Brownies**, **Walnut Brownies**, and **Vanilla Cupcakes**. This combination provides a great mix of textures and flavors, from soft cookies to rich brownies and light cupcakes. Want me to suggest quantities for a specific group size?",
+
+  previous:
+    "📋 Based on popular customer favorites, if you enjoy classic bakery treats I'd recommend our **Chocolate Chip Cookies**, **Chocolate Brownies**, and **Vanilla Cupcakes**. If you'd like to try something seasonal, check out our limited-time selections such as **Chocolate Chunk Pretzel Cookies**, **Pumpkin Brownies**, **Blueberry Cupcakes**, or **Peppermint Mocha Brownies**, depending on the time of year.",
+
+  subscription:
+    "📦 We currently don't offer a subscription program, but I'd be happy to help build a custom assortment of cookies, brownies, cupcakes, and pastries for recurring orders. Many customers enjoy creating a weekly box with a mix of **Chocolate Chip Cookies**, **Chocolate Brownies**, **Vanilla Cupcakes**, and **Cinnamon Rolls**.",
+
+  seasonal:
+    "🍂 Our seasonal menu changes throughout the year. Seasonal favorites include **Almond Fudge Cookies** and **Strawberry Blondies** in Spring, **Peach Cobbler Sugar Cookies** and **Smores Brownies** in Summer, **Chocolate Chunk Pretzel Cookies**, **Pumpkin Brownies**, and **Carrot Cupcakes** in Fall, and **Gingerbread Cookies**, **Peppermint Mocha Brownies**, and **Peppermint Chocolate Cupcakes** in Winter. Seasonal availability depends on the current season.",
 }
 
 function getResponse(input: string): string {

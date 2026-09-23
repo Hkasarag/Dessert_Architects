@@ -2,6 +2,7 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import { menuProducts } from '../data/menuProducts'
 
 const salesData = [
   { month: 'Apr', revenue: 18400, orders: 312 },
@@ -22,13 +23,16 @@ const customerGrowth = [
 ]
 
 const popularProducts = [
-  { name: 'Choc Chip Cookie', sales: 1240 },
-  { name: 'Butter Croissant', sales: 980 },
-  { name: 'Birthday Cake', sales: 720 },
-  { name: 'Cinnamon Roll', sales: 650 },
-  { name: 'Dark Choc Brownie', sales: 580 },
-  { name: 'Blueberry Muffin', sales: 490 },
-]
+  { productId: 1, sales: 1240 },
+  { productId: 60, sales: 980 },
+  { productId: 20, sales: 720 },
+  { productId: 40, sales: 650 },
+  { productId: 21, sales: 580 },
+  { productId: 61, sales: 490 },
+].flatMap(({ productId, sales }) => {
+  const product = menuProducts.find(item => item.id === productId)
+  return product ? [{ name: product.name, sales }] : []
+})
 
 const subscriptions = [
   { name: 'Sweet Starter', value: 28, color: '#6BBFD8' },
@@ -38,10 +42,10 @@ const subscriptions = [
 ]
 
 const insights = [
-  { icon: '📈', text: 'Chocolate products are trending 18% higher than last month', type: 'positive' },
-  { icon: '🎂', text: 'Birthday cake demand expected to increase 24% next weekend', type: 'positive' },
-  { icon: '⚠️', text: 'Vanilla frosting inventory may need replenishment within 7 days', type: 'warning' },
-  { icon: '🍂', text: 'Pumpkin Spice Cake launch is outperforming last year by 32%', type: 'positive' },
+  { icon: '📈', text: 'Chocolate Chip Cookie sales are trending 18% higher than last month', type: 'positive' },
+  { icon: '🍫', text: 'Chocolate Brownie demand is expected to increase 24% next weekend', type: 'positive' },
+  { icon: '⚠️', text: 'Vanilla Cupcake inventory may need replenishment within 7 days', type: 'warning' },
+  { icon: '🍂', text: 'Carrot Cupcake sales are outperforming last year by 32%', type: 'positive' },
   { icon: '📦', text: 'Family Favorites subscriptions grew 14% this month — highest ever', type: 'positive' },
   { icon: '🔮', text: 'Predict 20% revenue increase for October — plan staffing accordingly', type: 'forecast' },
 ]
@@ -50,7 +54,7 @@ const kpis = [
   { label: 'Monthly Revenue', value: '$28,940', change: '+11.6%', up: true, icon: '💰' },
   { label: 'Monthly Orders', value: '487', change: '+10.7%', up: true, icon: '📋' },
   { label: 'New Customers', value: '103', change: '+15.7%', up: true, icon: '👥' },
-  { label: 'Popular Product', value: 'Choc Chip Cookie', change: '1,240 sold', up: true, icon: '🍪' },
+  { label: 'Popular Product', value: 'Chocolate Chip Cookie', change: '1,240 sold', up: true, icon: '🍪' },
   { label: 'Subscriptions', value: '214 active', change: '+14.1%', up: true, icon: '📦' },
   { label: 'Inventory Health', value: 'Good', change: '1 alert', up: false, icon: '🏭' },
 ]

@@ -2,9 +2,24 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const orderHistory = [
-  { id: 'ORD-2847', date: 'Sep 18, 2026', items: ['Birthday Cake (10")', 'Macarons ×6'], total: 78.50 },
-  { id: 'ORD-2801', date: 'Sep 11, 2026', items: ['Butter Croissant ×4', 'Lemon Scone ×2', 'Blueberry Muffin ×2'], total: 28.50 },
-  { id: 'ORD-2756', date: 'Sep 4, 2026', items: ['Chocolate Chip Cookies ×12', 'Cinnamon Roll ×3'], total: 44.25 },
+  {
+    id: 'ORD-2847',
+    date: 'Sep 18, 2026',
+    items: ['Chocolate Chip Cookie ×12', 'Chocolate Brownie ×6'],
+    total: 56.88,
+  },
+  {
+    id: 'ORD-2801',
+    date: 'Sep 11, 2026',
+    items: ['Cinnamon Roll ×4', 'Vegan Banana Bread Muffin ×4'],
+    total: 27.92,
+  },
+  {
+    id: 'ORD-2756',
+    date: 'Sep 4, 2026',
+    items: ['Vanilla Cupcake ×6', 'Chocolate Cupcake ×6'],
+    total: 54.00,
+  },
 ]
 
 function formatDob(dob: string) {
@@ -98,7 +113,7 @@ export default function Profile() {
             <div>
               <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>FAVORITE BAKED GOODS</div>
               <div className="flex flex-wrap gap-2">
-                {['Chocolate Treats', 'Birthday Cakes', 'Croissants', 'Macarons'].map(t => (
+                {['Chocolate Treats', 'Seasonal Favorites', 'Cookies', 'Bundle Deals'].map(t => (
                   <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={{ background: 'var(--muted)', color: 'var(--foreground)' }}>{t}</span>
                 ))}
               </div>
@@ -106,7 +121,10 @@ export default function Profile() {
             <div>
               <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>DIETARY PREFERENCES</div>
               <div className="flex flex-wrap gap-2">
-                {['No Nuts (allergy)', 'Gluten-friendly options'].map(t => (
+                {[
+                    'Plant-Based Options',
+                    'Pollen-Free Treats',
+                  ].map(t => (
                   <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={{ background: '#FFF0E0', color: '#C47A00' }}>{t}</span>
                 ))}
               </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
+import { useAuth } from '../context/AuthContext'
 
 type Props = {
   items: CartItem[]
@@ -18,9 +19,12 @@ const PROMO_CODES: Record<string, { type: 'pct' | 'flat'; value: number; label: 
 
 export default function Cart({ items, updateQty, removeItem, clearCart }: Props) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [promoInput, setPromoInput] = useState('')
   const [appliedPromo, setAppliedPromo] = useState<null | { code: string; type: 'pct' | 'flat'; value: number; label: string }>(null)
   const [promoError, setPromoError] = useState('')
+  const [checkoutError, setCheckoutError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
@@ -45,9 +49,47 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
     setPromoInput('')
   }
 
-  const handleCheckout = () => {
-    clearCart()
-    navigate('/thankyou')
+  const submitOrder = async () => {
+    setCheckoutError('')
+    setIsSubmitting(true)
+
+    const order = {
+      orderId: '',
+      customerId: user?.username ?? '',
+      createdAt: new Date().toISOString(),
+      status: 'Pending',
+      subscriptionType: items.some(item => item.isSubscription) ? 'Subscription' : 'None',
+      subtotal: subtotal - promoDiscount,
+      tax,
+      total,
+      items: items.map(item => ({
+        productId: String(item.id),
+        productName: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        unitCost: 0,
+      })),
+    }
+
+    try {
+      const response = await fetch('http://localhost:5050/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to create the order.')
+      }
+
+      clearCart()
+      navigate('/thankyou')
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Unable to create the order.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -192,12 +234,14 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
               </div>
 
               <button
-                onClick={handleCheckout}
+                onClick={submitOrder}
+                disabled={isSubmitting}
                 className="w-full mt-5 py-4 rounded-2xl font-bold text-lg text-white transition hover:opacity-90 shadow-md mb-3"
                 style={{ background: 'var(--primary)' }}
               >
-                Checkout
+                {isSubmitting ? 'Submitting...' : 'Checkout'}
               </button>
+              {checkoutError && <p className="mt-3 text-sm font-medium text-red-600">{checkoutError}</p>}
               <button
                 className="w-full py-3 rounded-2xl font-bold text-base border-2 transition hover:bg-[var(--muted)]"
                 style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}

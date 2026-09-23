@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
+import { isInSeason, menuProducts, type MenuProduct } from '../data/menuProducts'
 
 type Props = {
   addToCart: (item: Omit<CartItem, 'quantity'>) => void
@@ -43,31 +44,18 @@ const promotions = [
   },
 ]
 
-const allProducts = [
-  { id: 101, name: 'Dark Chocolate Brownie', desc: 'Dense, fudgy, baked fresh daily', price: 4.50, image: 'photo-1606313564200-e75d5e30476c', category: 'Chocolate Lovers 🍫' },
-  { id: 102, name: 'Triple Choc Cookie', desc: 'White, milk & dark chips in every bite', price: 2.99, image: 'photo-1558961363-fa8fdf82db35', category: 'Chocolate Lovers 🍫' },
-  { id: 103, name: 'Chocolate Cupcake', desc: 'Silky ganache top, moist crumb', price: 3.99, image: 'photo-1576618148400-f54bed99fcfd', category: 'Chocolate Lovers 🍫' },
-  { id: 104, name: 'Butter Croissant', desc: 'Laminated dough, flaky & buttery', price: 3.25, image: 'photo-1555507036-ab1f4038808a', category: 'Fresh From The Oven 🥐' },
-  { id: 105, name: 'Cinnamon Roll', desc: 'Cream cheese frosting, served warm', price: 4.75, image: 'photo-1509365465985-25d11c17e812', category: 'Fresh From The Oven 🥐' },
-  { id: 106, name: 'Blueberry Muffin', desc: 'Bursting with fresh blueberries', price: 3.50, image: 'photo-1587314168485-3236d6710814', category: 'Fresh From The Oven 🥐' },
-  { id: 107, name: 'Funfetti Cupcake', desc: 'Rainbow sprinkles & vanilla buttercream', price: 3.99, image: 'photo-1563729784474-d77dbb933a9e', category: 'Birthday Favorites 🎂' },
-  { id: 108, name: 'Classic Birthday Cake', desc: 'Serves 12–16, your choice of flavor', price: 42.00, image: 'photo-1578985545062-69928b1d9587', category: 'Birthday Favorites 🎂' },
-  { id: 109, name: 'Macarons (6 pack)', desc: 'Assorted French macarons', price: 14.00, image: 'photo-1569864358642-9d1684040f43', category: 'Birthday Favorites 🎂' },
-  { id: 110, name: 'Almond Danish', desc: 'Flaky pastry with almond cream filling', price: 4.25, image: 'photo-1509365390695-33aee754301f', category: 'Weekend Brunch Picks ☀️' },
-  { id: 111, name: 'Lemon Scone', desc: 'Zesty, crumbly, perfect with tea', price: 3.50, image: 'photo-1571115177098-24ec42ed204d', category: 'Weekend Brunch Picks ☀️' },
-  { id: 112, name: 'Banana Bread Slice', desc: 'Moist, walnut-studded, house recipe', price: 3.75, image: 'photo-1481391319762-47dff72954d9', category: 'Weekend Brunch Picks ☀️' },
-]
+const allProducts = menuProducts.filter(product => isInSeason(product.season))
 
-//This will be generated dynamically in the future, but for now we can hardcode some categories for the AI to recommend products from.
 const categories = [
-  { label: 'Chocolate Lovers 🍫', bg: '#FFF0E0' },
-  { label: 'Fresh From The Oven 🥐', bg: '#FFF8E8' },
-  { label: 'Birthday Favorites 🎂', bg: '#F0E8FF' },
-  { label: 'Weekend Brunch Picks ☀️', bg: '#E8F8F0' },
+  { label: 'Cookies', bg: '#FFF0E0' },
+  { label: 'Brownies', bg: '#FFF8E8' },
+  { label: 'Cupcakes', bg: '#F0E8FF' },
+  { label: 'Pastries', bg: '#E8F8F0' },
+  { label: 'Seasonal', bg: '#FFF4E0' },
 ]
 
 function ProductCard({ product, addToCart }: {
-  product: typeof allProducts[0]
+  product: MenuProduct
   addToCart: (item: Omit<CartItem, 'quantity'>) => void
 }) {
   const [qty, setQty] = useState(1)
@@ -133,7 +121,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
     ? allProducts.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
+        p.cat.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : []
 
@@ -268,7 +256,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
 
       {/* AI Categories */}
       {categories.map(cat => {
-        const products = allProducts.filter(p => p.category === cat.label)
+        const products = allProducts.filter(p => p.cat === cat.label)
         return (
           <section key={cat.label}>
             <h2 className="text-2xl font-bold mb-5" style={{ fontFamily: 'Fraunces, serif' }}>{cat.label}</h2>
