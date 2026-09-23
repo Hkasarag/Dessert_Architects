@@ -3,28 +3,238 @@ import type { CartItem } from '../App'
 
 type Props = { addToCart: (item: Omit<CartItem, 'quantity'>) => void; searchQuery?: string }
 
-const tabs = ['All', 'Pastries', 'Cakes', 'Cookies', 'Breads', 'Seasonal']
+const tabs = [
+  'All',
+  'Cookies',
+  'Brownies',
+  'Cupcakes',
+  'Pastries',
+  'Seasonal'
+]
+const today = new Date()
+
+const getCurrentSeason = () => {
+  const month = new Date().getMonth() + 1
+
+  if (month >= 3 && month <= 5) return 'Spring'
+  if (month >= 6 && month <= 8) return 'Summer'
+  if (month >= 9 && month <= 11) return 'Fall'
+
+  return 'Winter'
+}
+
+const isInSeason = (season: string) => {
+  if (season === 'All Year') return true
+  return season === getCurrentSeason()
+}
+
 
 const allProducts = [
-  { id: 201, name: 'Butter Croissant', desc: 'Classic French laminated dough', price: 3.25, cat: 'Pastries', image: 'photo-1555507036-ab1f4038808a' },
-  { id: 202, name: 'Almond Croissant', desc: 'Filled with almond frangipane', price: 4.25, cat: 'Pastries', image: 'photo-1509365390695-33aee754301f' },
-  { id: 203, name: 'Pain au Chocolat', desc: 'Dark chocolate inside flaky pastry', price: 4.00, cat: 'Pastries', image: 'photo-1517093157656-b9eccef91cb1' },
-  { id: 204, name: 'Cinnamon Roll', desc: 'Cream cheese frosting, served warm', price: 4.75, cat: 'Pastries', image: 'photo-1509365465985-25d11c17e812' },
-  { id: 205, name: 'Blueberry Muffin', desc: 'Bursting with fresh blueberries', price: 3.50, cat: 'Pastries', image: 'photo-1587314168485-3236d6710814' },
-  { id: 206, name: 'Birthday Cake (10")', desc: 'Serves 16–20, custom decorated', price: 64.00, cat: 'Cakes', image: 'photo-1578985545062-69928b1d9587' },
-  { id: 207, name: 'Chocolate Layer Cake', desc: 'Three layers of rich chocolate sponge', price: 52.00, cat: 'Cakes', image: 'photo-1606313564200-e75d5e30476c' },
-  { id: 208, name: 'Lemon Drizzle Cake', desc: 'Bright lemon with crunchy glaze', price: 38.00, cat: 'Cakes', image: 'photo-1519869325930-281384150729' },
-  { id: 209, name: 'Carrot Cake (8")', desc: 'Cream cheese frosting, walnut top', price: 44.00, cat: 'Cakes', image: 'photo-1621303837174-89787a7d4729' },
-  { id: 210, name: 'Chocolate Chip Cookie', desc: 'Classic recipe, soft & chewy', price: 2.50, cat: 'Cookies', image: 'photo-1499636136210-6f4ee915583e' },
-  { id: 211, name: 'Snickerdoodle', desc: 'Cinnamon sugar with soft center', price: 2.50, cat: 'Cookies', image: 'photo-1558961363-fa8fdf82db35' },
-  { id: 212, name: 'Dark Choc Brownie', desc: 'Dense fudgy squares, daily fresh', price: 3.25, cat: 'Cookies', image: 'photo-1606313564200-e75d5e30476c' },
-  { id: 213, name: 'Macaron (each)', desc: 'Assorted French macarons', price: 2.75, cat: 'Cookies', image: 'photo-1569864358642-9d1684040f43' },
-  { id: 214, name: 'Sourdough Loaf', desc: 'Long-ferment, natural starter', price: 8.50, cat: 'Breads', image: 'photo-1509440159596-0249088772ff' },
-  { id: 215, name: 'Multigrain Loaf', desc: 'Seeds & whole grains, dense crumb', price: 7.50, cat: 'Breads', image: 'photo-1573246123716-6b1782bfc499' },
-  { id: 216, name: 'Focaccia (half sheet)', desc: 'Rosemary & flaky sea salt', price: 9.00, cat: 'Breads', image: 'photo-1574085733277-851d9d856a3a' },
-  { id: 217, name: 'Pumpkin Spice Cake', desc: 'Fall spices & cream cheese glaze', price: 36.00, cat: 'Seasonal', image: 'photo-1601784551446-20c9e07cdbdb' },
-  { id: 218, name: 'Peppermint Bark', desc: 'Dark chocolate & candy cane', price: 12.00, cat: 'Seasonal', image: 'photo-1549007953-2f2dc0b24019' },
-  { id: 219, name: 'Apple Cider Donut', desc: 'Cinnamon sugar, baked fresh', price: 3.00, cat: 'Seasonal', image: 'photo-1508737804141-4c3b688e2546' },
+  // COOKIES
+  {
+    id: 1,
+    name: '🍪 Chocolate Chip Cookie',
+    desc: 'Fresh baked cookie loaded with chocolate chips',
+    price: 2.99,
+    cat: 'Cookies',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'All Year'
+  },
+  {
+    id: 2,
+    name: '✨ Snickerdoodle Cookie',
+    desc: 'Classic cinnamon sugar cookie',
+    price: 2.99,
+    cat: 'Cookies',
+    image: 'photo-1558961363-fa8fdf82db35',
+    season: 'All Year'
+  },
+  {
+    id: 3,
+    name: '🥣 Oatmeal Cookie',
+    desc: 'Soft oatmeal cookie with warm spice notes',
+    price: 2.99,
+    cat: 'Cookies',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'All Year'
+  },
+  {
+    id: 4,
+    name: '🌸 Almond Fudge Cookie',
+    desc: 'Almond cookie loaded with fudge chunks',
+    price: 2.99,
+    cat: 'Seasonal',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'Spring'
+  },
+  {
+    id: 5,
+    name: '🍑 Peach Cobbler Sugar Cookie',
+    desc: 'Peach filling and cinnamon sugar',
+    price: 2.99,
+    cat: 'Seasonal',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'Summer'
+  },
+  {
+    id: 6,
+    name: '🥨 Chocolate Chunk Pretzel Cookie',
+    desc: 'Chocolate chunks with crunchy pretzel pieces',
+    price: 2.99,
+    cat: 'Seasonal',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'Fall'
+  },
+  {
+    id: 7,
+    name: '🎄 Gingerbread Cookie',
+    desc: 'Classic holiday gingerbread spices',
+    price: 2.99,
+    cat: 'Seasonal',
+    image: 'photo-1499636136210-6f4ee915583e',
+    season: 'Winter'
+  },
+
+  // BROWNIES
+  {
+    id: 20,
+    name: '🍫 Chocolate Brownie',
+    desc: 'Rich fudgy chocolate brownie',
+    price: 3.50,
+    cat: 'Brownies',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'All Year'
+  },
+  {
+    id: 21,
+    name: '🌰 Walnut Brownie',
+    desc: 'Chocolate brownie with walnuts',
+    price: 3.50,
+    cat: 'Brownies',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'All Year'
+  },
+  {
+    id: 22,
+    name: '🍓 Strawberry Blondie',
+    desc: 'Spring strawberry blondie',
+    price: 3.50,
+    cat: 'Seasonal',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'Spring'
+  },
+  {
+    id: 23,
+    name: '🔥 Smores Brownie',
+    desc: 'Chocolate brownie topped with marshmallow and graham cracker',
+    price: 3.50,
+    cat: 'Seasonal',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'Summer'
+  },
+  {
+    id: 24,
+    name: '🎃 Pumpkin Brownie',
+    desc: 'Pumpkin brownie with warm fall spices',
+    price: 3.50,
+    cat: 'Seasonal',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'Fall'
+  },
+  {
+    id: 25,
+    name: '❄️ Peppermint Mocha Brownie',
+    desc: 'Peppermint brownie infused with espresso',
+    price: 3.50,
+    cat: 'Seasonal',
+    image: 'photo-1606313564200-e75d5e30476c',
+    season: 'Winter'
+  },
+
+  // CUPCAKES
+  {
+    id: 40,
+    name: '🧁 Vanilla Cupcake',
+    desc: 'Classic vanilla buttercream cupcake',
+    price: 4.50,
+    cat: 'Cupcakes',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'All Year'
+  },
+  {
+    id: 41,
+    name: '🍫 Chocolate Cupcake',
+    desc: 'Chocolate cupcake with chocolate frosting',
+    price: 4.50,
+    cat: 'Cupcakes',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'All Year'
+  },
+  {
+    id: 42,
+    name: '🍋 Lemon Cupcake',
+    desc: 'Fresh citrus cupcake with vanilla frosting',
+    price: 4.50,
+    cat: 'Cupcakes',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'All Year'
+  },
+  {
+    id: 43,
+    name: '🫐 Blueberry Cupcake',
+    desc: 'Blueberry cupcake with vanilla frosting',
+    price: 4.50,
+    cat: 'Seasonal',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'Spring'
+  },
+  {
+    id: 44,
+    name: '🥥 Toasted Coconut Cupcake',
+    desc: 'Toasted coconut cupcake',
+    price: 4.50,
+    cat: 'Seasonal',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'Summer'
+  },
+  {
+    id: 45,
+    name: '🥕 Carrot Cupcake',
+    desc: 'Carrot cupcake with cream cheese frosting',
+    price: 4.50,
+    cat: 'Seasonal',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'Fall'
+  },
+  {
+    id: 46,
+    name: '🎄 Peppermint Chocolate Cupcake',
+    desc: 'Chocolate cupcake with peppermint frosting',
+    price: 4.50,
+    cat: 'Seasonal',
+    image: 'photo-1486427944299-d1955d23e34d',
+    season: 'Winter'
+  },
+
+  // PASTRIES
+  {
+    id: 60,
+    name: '🥐 Cinnamon Roll',
+    desc: 'Warm cinnamon roll with cream cheese frosting',
+    price: 3.99,
+    cat: 'Pastries',
+    image: 'photo-1509365465985-25d11c17e812',
+    season: 'All Year'
+  },
+  {
+    id: 61,
+    name: '🍌 Vegan Banana Bread Muffin',
+    desc: 'Plant-based banana bread muffin',
+    price: 2.99,
+    cat: 'Pastries',
+    image: 'photo-1587314168485-3236d6710814',
+    season: 'All Year'
+  }
 ]
 
 export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
@@ -32,10 +242,23 @@ export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
   const [search, setSearch] = useState(searchQuery)
   const [added, setAdded] = useState<number | null>(null)
 
-  const filtered = allProducts.filter(p =>
-    (activeTab === 'All' || p.cat === activeTab) &&
-    (p.name.toLowerCase().includes(search.toLowerCase()) || p.cat.toLowerCase().includes(search.toLowerCase()))
-  )
+ const filtered = allProducts.filter(
+  p =>
+    isInSeason(p.season) &&
+    (
+      activeTab === 'All' ||
+      p.cat === activeTab ||
+      (
+        activeTab === 'Seasonal' &&
+        p.cat === 'Seasonal'
+      )
+    ) &&
+    (
+      search.trim() === '' ||
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.cat.toLowerCase().includes(search.toLowerCase())
+    )
+)
 
   const handleAdd = (p: typeof allProducts[0]) => {
     addToCart({
