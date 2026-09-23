@@ -52,7 +52,7 @@ export default function SignUp({ onGoLogin }: Props) {
             className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-md"
             style={{ background: 'var(--primary)' }}
           >🥐</div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Join Crumb & Joy</h1>
+          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Join Frosted Corner</h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--muted-foreground)' }}>Fresh treats, personalized for you</p>
         </div>
 

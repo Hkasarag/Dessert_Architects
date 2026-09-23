@@ -110,7 +110,7 @@ export default function AdminHome() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-4xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Bulk Ingredient Ordering</h1>
-          <p className="mt-1" style={{ color: 'var(--muted-foreground)' }}>Order supplies directly from Crumb & Joy HQ. Bulk pricing applied automatically.</p>
+          <p className="mt-1" style={{ color: 'var(--muted-foreground)' }}>Order supplies directly from Frosted Corner. Bulk pricing applied automatically.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold" style={{ background: '#E8F5FF', color: 'var(--primary)' }}>🏭 Franchise Portal</div>
       </div>

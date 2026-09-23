@@ -1,8 +1,8 @@
-# Crumb & Joy Architecture
+# Frosted Corner Architecture
 
 ## Overview
 
-Crumb & Joy is a React 19 + Vite bakery prototype built with TypeScript and Tailwind CSS v4. It provides two in-memory experiences:
+Frosted Corner is a React 19 + Vite bakery prototype built with TypeScript and Tailwind CSS v4. It provides two in-memory experiences:
 
 - Customer shopping: browse products, search, manage a cart, apply promo codes, view a profile, use subscriptions, and chat with a rule-based concierge.
 - Admin/franchise operations: place bulk ingredient orders, inspect inventory, and view analytics.

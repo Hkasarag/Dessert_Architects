@@ -52,14 +52,14 @@ const SEED_ACCOUNTS: Array<SignupData & { profile: UserProfile }> = [
   {
     username: 'admin',
     password: 'admin123',
-    email: 'admin@crumbandjoy.com',
+    email: 'admin@frostedcorner.com',
     phone: '+1 (555) 000-0001',
     dob: '1985-01-01',
     address: '1 Bakery HQ Plaza, Chicago, IL 60601',
     role: 'admin',
     profile: {
       username: 'admin',
-      email: 'admin@crumbandjoy.com',
+      email: 'admin@frostedcorner.com',
       phone: '+1 (555) 000-0001',
       dob: '1985-01-01',
       address: '1 Bakery HQ Plaza, Chicago, IL 60601',

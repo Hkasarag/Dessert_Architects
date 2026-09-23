@@ -58,6 +58,7 @@ const allProducts = [
   { id: 112, name: 'Banana Bread Slice', desc: 'Moist, walnut-studded, house recipe', price: 3.75, image: 'photo-1481391319762-47dff72954d9', category: 'Weekend Brunch Picks ☀️' },
 ]
 
+//This will be generated dynamically in the future, but for now we can hardcode some categories for the AI to recommend products from.
 const categories = [
   { label: 'Chocolate Lovers 🍫', bg: '#FFF0E0' },
   { label: 'Fresh From The Oven 🥐', bg: '#FFF8E8' },
