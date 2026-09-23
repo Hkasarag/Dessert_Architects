@@ -67,6 +67,7 @@ function ProductCard({ product, addToCart }: {
         id: product.id,
         name: product.name,
         price: product.price,
+        unitCost: product.unitCost,
         image: `https://images.unsplash.com/${product.image}?w=200&h=200&fit=crop&auto=format`,
       })
     }
@@ -244,7 +245,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
                 <button
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
                   style={{ background: p.accent }}
-                  onClick={() => addToCart({ id: parseInt('9' + p.id.replace('p', '')), name: p.name, price: p.price, image: '' })}
+                  onClick={() => addToCart({ id: parseInt('9' + p.id.replace('p', '')), name: p.name, price: p.price, unitCost: 9999999999999, image: '' })}
                 >
                   Add To Cart
                 </button>

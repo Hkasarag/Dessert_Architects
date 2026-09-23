@@ -25,12 +25,16 @@ function StockBar({ item }: { item: InventoryItem }) {
 const categories = ['All', ...Array.from(new Set(initialInventory.map(i => i.category)))]
 
 export default function Inventory() {
-  const [inventory, setInventory] = useState(initialInventory)
+  const [inventory, setInventory] = useState(() => initialInventory.map(item => ({ ...item })))
+  const [baselineInventory, setBaselineInventory] = useState(() => initialInventory.map(item => ({ ...item })))
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [editId, setEditId] = useState<number | null>(null)
   const [editVal, setEditVal] = useState('')
   const [filterLow, setFilterLow] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [submitSuccess, setSubmitSuccess] = useState('')
 
   const filtered = inventory.filter(i =>
     (activeCategory === 'All' || i.category === activeCategory) &&
@@ -41,9 +45,80 @@ export default function Inventory() {
   const saveEdit = (id: number) => {
     const val = parseFloat(editVal)
     if (!isNaN(val) && val >= 0) {
-      setInventory(prev => prev.map(i => i.id === id ? { ...i, currentStock: val, lastRestocked: 'Sep 22, 2026' } : i))
+      setInventory(prev => prev.map(item => item.id === id ? { ...item, currentStock: val } : item))
     }
     setEditId(null)
+  }
+
+  const updateStockWhileEditing = (id: number, value: string) => {
+    setEditVal(value)
+    const numericValue = parseFloat(value)
+    if (!Number.isNaN(numericValue) && numericValue >= 0) {
+      setInventory(prev => prev.map(item =>
+        item.id === id ? { ...item, currentStock: numericValue } : item
+      ))
+    }
+  }
+
+  const changedItems = inventory.filter(item => {
+    const original = baselineInventory.find(initialItem => initialItem.id === item.id)
+    return original && original.currentStock !== item.currentStock
+  })
+
+  const submitInventoryUsage = async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    setSubmitError('')
+    setSubmitSuccess('')
+
+    const usageItems = changedItems
+      .map(item => {
+        const original = baselineInventory.find(initialItem => initialItem.id === item.id)
+        const quantityUsed = original ? Math.max(0, original.currentStock - item.currentStock) : 0
+        return { item, quantityUsed }
+      })
+      .filter(({ quantityUsed }) => quantityUsed > 0)
+
+    const usageTransaction = {
+      inventoryTransactionId: '',
+      locationId: 'ATL001',
+      transactionDate: new Date().toISOString(),
+      transactionType: 'Usage',
+      totalCost: usageItems.reduce((total, { item, quantityUsed }) => total + quantityUsed * item.unitCost, 0),
+      lineItems: usageItems.map(({ item, quantityUsed }) => ({
+        ingredientId: `ING-${String(item.id).padStart(3, '0')}`,
+        ingredientName: item.name.toLowerCase().replace(/\s+/g, '_'),
+        category: item.category,
+        quantity: quantityUsed,
+        unitOfMeasure: item.unit,
+        unitCost: item.unitCost,
+        extendedCost: quantityUsed * item.unitCost,
+        lotNumber: null,
+        expirationDate: null,
+        storageLocation: item.category === 'Dairy' ? 'Cold Storage' : 'Dry Storage',
+      })),
+      createdAt: '',
+    }
+
+    try {
+      if (usageTransaction.lineItems.length > 0) {
+        const response = await fetch('http://localhost:5050/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(usageTransaction),
+        })
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Unable to submit inventory usage.')
+      }
+
+      setSubmitSuccess(`Weekly inventory submitted for ${changedItems.length} ingredient${changedItems.length === 1 ? '' : 's'}.`)
+      setBaselineInventory(inventory.map(item => ({ ...item })))
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to submit inventory usage.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const criticalCount = inventory.filter(i => stockStatus(i).label === 'Critical').length
@@ -147,6 +222,25 @@ export default function Inventory() {
         </div>
       </div>
 
+      <div className="rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
+        <div>
+          <div className="font-bold">Weekly inventory count</div>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
+            Review the list and submit when the count is complete. Changes are optional.
+          </p>
+          {submitError && <p className="text-sm mt-2 text-red-600">{submitError}</p>}
+          {submitSuccess && <p className="text-sm mt-2 text-green-600">{submitSuccess}</p>}
+        </div>
+        <button
+          onClick={submitInventoryUsage}
+          disabled={isSubmitting}
+          className="px-4 py-2.5 rounded-xl font-bold text-sm text-white transition hover:opacity-90 disabled:opacity-40 whitespace-nowrap"
+          style={{ background: submitSuccess ? '#27AE60' : 'var(--primary)' }}
+        >
+          {isSubmitting ? 'Submitting…' : 'Submit Weekly Count'}
+        </button>
+      </div>
+
       {/* Table */}
       <div className="rounded-2xl border overflow-hidden" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
         <div className="overflow-x-auto">
@@ -162,10 +256,15 @@ export default function Inventory() {
               {filtered.map((item, idx) => {
                 const status = stockStatus(item)
                 const isEditing = editId === item.id
+                const baseline = baselineInventory.find(original => original.id === item.id)
+                const isChanged = baseline?.currentStock !== item.currentStock
                 return (
                   <tr
                     key={item.id}
-                    style={{ borderTop: idx > 0 ? '1px solid var(--border)' : undefined }}
+                    style={{
+                      borderTop: idx > 0 ? '1px solid var(--border)' : undefined,
+                      background: isChanged ? '#FFF8E0' : undefined,
+                    }}
                   >
                     <td className="py-3.5 px-4 font-semibold">{item.name}</td>
                     <td className="py-3.5 px-4">
@@ -179,7 +278,7 @@ export default function Inventory() {
                           <input
                             type="number"
                             value={editVal}
-                            onChange={e => setEditVal(e.target.value)}
+                            onChange={e => updateStockWhileEditing(item.id, e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter') saveEdit(item.id); if (e.key === 'Escape') setEditId(null) }}
                             className="w-20 px-2 py-1 rounded-lg border text-sm outline-none"
                             style={{ borderColor: 'var(--primary)' }}
@@ -189,7 +288,12 @@ export default function Inventory() {
                         </div>
                       ) : (
                         <div>
-                          <div className="font-semibold mb-1">{item.currentStock} {item.unit}</div>
+                          <div
+                            className="font-semibold mb-1"
+                            style={{ color: isChanged ? '#D4870A' : 'var(--foreground)' }}
+                          >
+                            {item.currentStock} {item.unit}{isChanged ? ' · Edited' : ''}
+                          </div>
                           <StockBar item={item} />
                         </div>
                       )}

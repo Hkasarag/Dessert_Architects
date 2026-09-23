@@ -11,7 +11,11 @@ const createTransactionId = () =>
   `INV-${Date.now().toString().slice(-8)}-${randomUUID().slice(0, 8).toUpperCase()}`;
 
 const buildInventoryTransaction = body => {
-  if (!body || !Array.isArray(body.lineItems) || body.lineItems.length === 0) {
+  if (!body || !Array.isArray(body.lineItems)) {
+    return { error: "An inventory transaction must contain a lineItems array." };
+  }
+
+  if (body.lineItems.length === 0 && body.transactionType !== "Usage") {
     return { error: "An inventory transaction must contain at least one line item." };
   }
 
