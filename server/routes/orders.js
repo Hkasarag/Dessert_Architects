@@ -61,7 +61,15 @@ const buildOrder = body => {
 */
 router.get("/", async (req, res) => {
   try {
-    const results = await orders().find({}).sort({ createdAt: -1 }).toArray();
+    const customerId = typeof req.query.customerId === "string" ? req.query.customerId.trim() : "";
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 3;
+    const filter = customerId ? { customerId } : {};
+    const results = await orders()
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
     res.status(200).json(results);
   } catch (err) {
     console.error(err);

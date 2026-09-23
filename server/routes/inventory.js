@@ -99,9 +99,14 @@ const createInventory = async (req, res, next) => {
 
 router.get("/", async (req, res) => {
   try {
+    const locationId = typeof req.query.locationId === "string" ? req.query.locationId.trim() : "";
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 3;
+    const filter = locationId ? { locationId } : {};
     const results = await inventory()
-      .find({})
+      .find(filter)
       .sort({ transactionDate: -1 })
+      .limit(limit)
       .toArray();
     res.status(200).json(results);
   } catch (error) {

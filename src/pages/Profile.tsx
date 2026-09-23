@@ -1,26 +1,51 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const orderHistory = [
-  {
-    id: 'ORD-2847',
-    date: 'Sep 18, 2026',
-    items: ['Chocolate Chip Cookie ×12', 'Chocolate Brownie ×6'],
-    total: 56.88,
-  },
-  {
-    id: 'ORD-2801',
-    date: 'Sep 11, 2026',
-    items: ['Cinnamon Roll ×4', 'Vegan Banana Bread Muffin ×4'],
-    total: 27.92,
-  },
-  {
-    id: 'ORD-2756',
-    date: 'Sep 4, 2026',
-    items: ['Vanilla Cupcake ×6', 'Chocolate Cupcake ×6'],
-    total: 54.00,
-  },
-]
+type ProfileOrder = {
+  id: string
+  date: string
+  items: string[]
+  total: number
+}
+
+type OrderRecord = {
+  orderId?: string
+  createdAt?: string
+  total?: number
+  items?: Array<{ productName?: string; quantity?: number }>
+}
+
+type InventoryRecord = {
+  inventoryTransactionId?: string
+  transactionDate?: string
+  totalCost?: number
+  lineItems?: Array<{ ingredientName?: string; quantity?: number; unitOfMeasure?: string }>
+}
+
+const formatHistoryDate = (value?: string) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+const normalizeCustomerOrder = (order: OrderRecord): ProfileOrder => ({
+  id: order.orderId || 'Order',
+  date: formatHistoryDate(order.createdAt),
+  items: (order.items || []).map(item => `${item.productName || 'Item'} ×${item.quantity || 0}`),
+  total: Number(order.total || 0),
+})
+
+const normalizeInventoryOrder = (transaction: InventoryRecord): ProfileOrder => ({
+  id: transaction.inventoryTransactionId || 'Inventory transaction',
+  date: formatHistoryDate(transaction.transactionDate),
+  items: (transaction.lineItems || []).map(item =>
+    `${item.ingredientName || 'Ingredient'} ×${item.quantity || 0} ${item.unitOfMeasure || ''}`.trim()
+  ),
+  total: Number(transaction.totalCost || 0),
+})
 
 function formatDob(dob: string) {
   if (!dob) return '—'
@@ -36,6 +61,43 @@ function formatDob(dob: string) {
 export default function Profile() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const [orderHistory, setOrderHistory] = useState<ProfileOrder[]>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+  const [historyError, setHistoryError] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+
+    const controller = new AbortController()
+    const isAdmin = user.role === 'admin'
+    const endpoint = isAdmin
+      ? 'http://localhost:5050/inventory?limit=3'
+      : `http://localhost:5050/orders?customerId=${encodeURIComponent(user.username)}&limit=3`
+
+    const loadHistory = async () => {
+      setHistoryLoading(true)
+      setHistoryError('')
+
+      try {
+        const response = await fetch(endpoint, { signal: controller.signal })
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Unable to load order history.')
+
+        const history = isAdmin
+          ? (result as InventoryRecord[]).map(normalizeInventoryOrder)
+          : (result as OrderRecord[]).map(normalizeCustomerOrder)
+        setOrderHistory(history.slice(0, 3))
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setHistoryError(error instanceof Error ? error.message : 'Unable to load order history.')
+      } finally {
+        if (!controller.signal.aborted) setHistoryLoading(false)
+      }
+    }
+
+    loadHistory()
+    return () => controller.abort()
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -191,7 +253,12 @@ export default function Profile() {
       {/* Order History */}
       <section className="rounded-2xl border p-6" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
         <h2 className="text-xl font-bold mb-5" style={{ fontFamily: 'Fraunces, serif' }}>📋 Order History</h2>
-        <div className="space-y-4">
+        {historyLoading && <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Loading recent orders…</p>}
+        {historyError && <p className="text-sm text-red-600">{historyError}</p>}
+        {!historyLoading && !historyError && orderHistory.length === 0 && (
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>No recent orders found.</p>
+        )}
+        {!historyLoading && !historyError && <div className="space-y-4">
           {orderHistory.map(order => (
             <div
               key={order.id}
@@ -214,7 +281,7 @@ export default function Profile() {
               </div>
             </div>
           ))}
-        </div>
+        </div>}
       </section>
 
       {/* Danger zone */}
