@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { sendChatMessage, type ChatTurn } from '../lib/chatApi'
 
 type SupplyItem = {
   id: number
@@ -222,24 +223,40 @@ export default function AdminHome() {
   )
 }
 
-import { routeAdminIntent, executeAgentByIntent } from '../agents/router'
+type AdminMessage = {
+  id: number
+  role: 'admin' | 'assistant'
+  text: string
+  agentLabel?: string
+  isError?: boolean
+}
 
 function AdminChat() {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<{ id: number; role: 'admin' | 'assistant'; text: string; payload?: string }[]>([])
+  const [messages, setMessages] = useState<AdminMessage[]>([])
+  const [thinking, setThinking] = useState(false)
 
   const send = async (text: string) => {
-    if (!text.trim()) return
+    if (!text.trim() || thinking) return
     const id = Date.now()
-    setMessages(prev => [...prev, { id, role: 'admin', text }])
+    const adminMsg: AdminMessage = { id, role: 'admin', text: text.trim() }
+    const history: ChatTurn[] = [...messages, adminMsg]
+      .filter(m => !m.isError)
+      .map(m => ({ role: m.role === 'admin' ? 'user' : 'assistant', content: m.text }))
+
+    setMessages(prev => [...prev, adminMsg])
     setInput('')
-    const route = routeAdminIntent(text)
-    const result = executeAgentByIntent(route.intent, text, 'admin')
-    const { formatAgentResponse } = await import('../agents/responseFormatter')
-    const formatted = formatAgentResponse(route, result)
-    setTimeout(() => {
-      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: formatted }])
-    }, 600)
+    setThinking(true)
+
+    try {
+      const result = await sendChatMessage({ role: 'admin', messages: history })
+      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: result.reply, agentLabel: result.agent.label }])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: message, isError: true }])
+    } finally {
+      setThinking(false)
+    }
   }
 
   return (
@@ -247,20 +264,35 @@ function AdminChat() {
       <div className="w-full">
         {messages.map(m => (
           <div key={m.id} className="mb-2">
-            <div className={`text-sm font-semibold ${m.role === 'admin' ? 'text-right' : ''}`}>{m.role === 'admin' ? 'You' : 'Franchise Assistant'}</div>
-            <div className="rounded-xl p-3" style={{ background: m.role === 'admin' ? 'var(--muted)' : 'var(--card)' }}>
-              <div className="text-sm whitespace-pre-wrap">{m.text}</div>
-              {m.payload && (
-                <pre className="mt-2 text-xs p-2 rounded" style={{ background: '#0b1220', color: '#e6eef8' }}>{m.payload}</pre>
-              )}
+            <div className={`text-sm font-semibold ${m.role === 'admin' ? 'text-right' : ''}`}>
+              {m.role === 'admin' ? 'You' : 'Franchise Assistant'}
+              {m.agentLabel && <span className="font-normal" style={{ color: 'var(--muted-foreground)' }}> · {m.agentLabel}</span>}
+            </div>
+            <div className="rounded-xl p-3" style={{ background: m.role === 'admin' ? 'var(--muted)' : m.isError ? '#FFF0F0' : 'var(--card)' }}>
+              <div className="text-sm whitespace-pre-wrap" style={m.isError ? { color: '#C0392B' } : undefined}>{m.text}</div>
             </div>
           </div>
         ))}
+        {thinking && <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Franchise Assistant is thinking…</p>}
       </div>
 
       <div className="flex gap-2">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send(input)} className="flex-1 px-3 py-2 rounded-xl border" />
-        <button onClick={() => send(input)} className="px-4 py-2 rounded-xl text-white" style={{ background: 'var(--primary)' }}>Send</button>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && send(input)}
+          placeholder="e.g. What should I reorder this week?"
+          aria-label="Message the franchise assistant"
+          className="flex-1 px-3 py-2 rounded-xl border"
+        />
+        <button
+          onClick={() => send(input)}
+          disabled={!input.trim() || thinking}
+          className="px-4 py-2 rounded-xl text-white disabled:opacity-40"
+          style={{ background: 'var(--primary)' }}
+        >
+          Send
+        </button>
       </div>
     </div>
   )

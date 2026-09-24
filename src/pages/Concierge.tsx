@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import {
-  executeAgentByIntent,
-  routeCustomerIntent,
-  type AgentIntent,
-} from '../agents/router'
-import { formatAgentResponse } from '../agents/responseFormatter'
+import type { CartItem } from '../App'
+import { useAuth } from '../context/AuthContext'
+import { sendChatMessage, type ChatTurn } from '../lib/chatApi'
 
 type Message = {
   id: number
@@ -12,7 +9,11 @@ type Message = {
   text: string
   time: string
   agentLabel?: string
-  jsonPayload?: string
+  isError?: boolean
+}
+
+type Props = {
+  cartItems: CartItem[]
 }
 
 const suggestions = [
@@ -24,59 +25,20 @@ const suggestions = [
   'What seasonal items are available now?',
 ]
 
-const responses: Record<string, string> = {
-  'birthday': "🎂 Great choice! For a birthday party, I'd recommend our **Classic Birthday Cake (10-inch)** — it serves 16–20 guests and can be custom decorated. Pair it with our **Funfetti Cupcakes** for color and our **Macarons (6-pack)** as elegant party favors. That combination is our most popular birthday order. Shall I add any of these to your cart?",
-  'family': "🏡 For a family gathering, our **Family Celebration Package** is perfect — it includes a custom cake and 2 dozen mini cupcakes. I'd also suggest adding our **Butter Croissants** and **Cinnamon Rolls** for morning arrivals. Based on your order history, your family loves chocolate, so our **Dark Chocolate Brownies** would be a crowd-pleaser!",
-  'dessert tray': "🍰 A beautiful dessert tray! Here's what I recommend for variety and visual impact: **Macarons** (assorted colors), **Dark Chocolate Brownies** (cut into squares), **Snickerdoodles**, and **Lemon Scones** with clotted cream. This gives you 4 textures and flavor profiles that complement each other. Shall I build this order for you?",
-  'previous': "📋 Looking at your order history, you frequently order **Chocolate Chip Cookies**, **Birthday Cakes**, and **Croissants**. Since it's fall, I'd suggest trying our new **Pumpkin Spice Cake** — it's similar to your usual Birthday Cake order but with seasonal spices. Our **Apple Cider Donuts** are also new and I think you'll love them!",
-  'subscription': "📦 Based on your ordering frequency (about weekly), the **Family Favorites Plan** at $49/month is your best value — you're already spending about $60/week! It includes 8 treats weekly, 15% off all orders, and free delivery. If you'd like more variety, the **Bakery VIP Club** gives you early access to seasonal items. Which sounds right for your family?",
-  'seasonal': "🍂 This fall, we're featuring: **Pumpkin Spice Cake** (a customer favorite!), **Apple Cider Donuts**, **Peppermint Bark** (getting an early start!), and our special **Holiday Dessert Tray** with gingerbread and yule log. All seasonal items sell out quickly — subscribers get first access. Want me to set up a notification?",
-}
-
-function getResponse(input: string): string {
-  const lower = input.toLowerCase()
-  for (const [key, resp] of Object.entries(responses)) {
-    if (lower.includes(key)) return resp
-  }
-  return "🥐 That's a wonderful question! Let me help you find the perfect treats. Based on our bakery's menu and your preferences, I'd suggest starting with our **Personalized Recommendations** on the home page — I've tailored those selections just for you. You can also browse by category in the full menu. Is there a specific occasion, flavor, or dietary preference I can help narrow down?"
-}
-
 function formatTime() {
   const now = new Date()
   return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-function summarizeIntent(intent: AgentIntent) {
-  const labels: Record<AgentIntent, string> = {
-    product_recommendation: 'Product Recommendation Agent',
-    promotion_recommendation: 'Promotion Recommendation Agent',
-    party_planning: 'Party Planner Agent',
-    franchise_reordering: 'Franchise Reordering Agent',
-    customer_service: 'Customer Service Agent',
-    cart_optimization: 'Cart Optimization Agent',
-    nutritional_allergy: 'Nutritional & Allergy Agent',
-    clarification_required: 'Orchestrator Agent',
-  }
+const WELCOME_ID = 0
 
-  return labels[intent]
-}
-
-function renderStructuredResponse(route: ReturnType<typeof routeCustomerIntent>, result: unknown) {
-  // kept for backward compatibility; not used after switching to formatAgentResponse
-  const intentLabel = summarizeIntent(route.intent)
-  return {
-    text: `Routed to: ${intentLabel} — ${route.rationale}`,
-    jsonPayload: undefined,
-    agentLabel: intentLabel,
-  }
-}
-
-export default function Concierge() {
+export default function Concierge({ cartItems }: Props) {
+  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 0,
+      id: WELCOME_ID,
       role: 'assistant',
-      text: "👋 Hello! I’m your bakery concierge and orchestrator. I can route your request to the right specialist agent for recommendations, promotions, event planning, inventory, order support, or dietary guidance.",
+      text: "👋 Hello! I'm your bakery concierge. I can recommend treats, plan desserts for a party, suggest add-ons for your cart, help with allergies and dietary needs, or check on an order.",
       time: formatTime(),
       agentLabel: 'Orchestrator Agent',
     },
@@ -89,30 +51,44 @@ export default function Concierge() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
-  const send = (text: string) => {
-    if (!text.trim()) return
+  const send = async (text: string) => {
+    if (!text.trim() || typing) return
 
-    const userMsg: Message = { id: Date.now(), role: 'user', text, time: formatTime() }
+    const userMsg: Message = { id: Date.now(), role: 'user', text: text.trim(), time: formatTime() }
+    // The welcome message and error notices are UI-only, so they are not sent to the model.
+    const history: ChatTurn[] = [...messages, userMsg]
+      .filter(m => m.id !== WELCOME_ID && !m.isError)
+      .map(m => ({ role: m.role, content: m.text }))
+
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setTyping(true)
 
-    setTimeout(() => {
-      const route = routeCustomerIntent(text)
-      const result = executeAgentByIntent(route.intent, text, 'customer')
-      const formatted = formatAgentResponse(route, result)
-
-      const resp: Message = {
+    try {
+      const result = await sendChatMessage({
+        role: 'customer',
+        messages: history,
+        customerId: user?.username,
+        cart: cartItems,
+      })
+      setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        text: formatted,
+        text: result.reply,
         time: formatTime(),
-        agentLabel: summarizeIntent(route.intent),
-      }
-
+        agentLabel: result.agent.label,
+      }])
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        role: 'assistant',
+        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+        time: formatTime(),
+        isError: true,
+      }])
+    } finally {
       setTyping(false)
-      setMessages(prev => [...prev, resp])
-    }, 1000)
+    }
   }
 
   return (
@@ -123,7 +99,7 @@ export default function Concierge() {
         </div>
         <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>AI Dessert Concierge</h1>
         <p className="mt-2 text-base" style={{ color: 'var(--muted-foreground)' }}>
-          Routed by an orchestrator to specialized bakery agents for products, promotions, party planning, and support.
+          Routed by an AI orchestrator to specialized bakery agents for recommendations, party planning, cart help, dietary guidance, and support.
         </p>
       </div>
 
@@ -138,22 +114,18 @@ export default function Concierge() {
               )}
               <div className={`flex flex-col gap-1 max-w-[82%] ${msg.role === 'user' ? 'items-end' : ''}`}>
                 <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-line" style={{
-                  background: msg.role === 'user' ? 'var(--primary)' : 'var(--muted)',
-                  color: msg.role === 'user' ? 'white' : 'var(--foreground)',
+                  background: msg.role === 'user' ? 'var(--primary)' : msg.isError ? '#FFF0F0' : 'var(--muted)',
+                  color: msg.role === 'user' ? 'white' : msg.isError ? '#C0392B' : 'var(--foreground)',
                   borderBottomRightRadius: msg.role === 'user' ? '4px' : undefined,
                   borderBottomLeftRadius: msg.role === 'assistant' ? '4px' : undefined,
                 }}>
                   {msg.text}
                 </div>
 
-                {msg.jsonPayload && (
-                  <div className="w-full overflow-x-auto rounded-2xl border p-3 text-[11px] leading-5" style={{ background: '#111827', color: '#f3f4f6', borderColor: 'var(--border)' }}>
-                    <div className="mb-2 font-semibold text-[10px] uppercase tracking-wide" style={{ color: '#fbbf24' }}>{msg.agentLabel}</div>
-                    <pre className="whitespace-pre-wrap break-words m-0">{msg.jsonPayload}</pre>
-                  </div>
-                )}
-
-                <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{msg.time}</span>
+                <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                  {msg.time}
+                  {msg.role === 'assistant' && msg.agentLabel && ` · ${msg.agentLabel}`}
+                </span>
               </div>
             </div>
           ))}
@@ -181,6 +153,7 @@ export default function Concierge() {
                 <button
                   key={s}
                   onClick={() => send(s)}
+                  disabled={typing}
                   className="px-3 py-2 rounded-xl text-sm font-medium border transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
                   style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
                 >
@@ -197,13 +170,15 @@ export default function Concierge() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send(input)}
-            placeholder="Ask about treats, recommendations, subscriptions, events, or inventory…"
+            placeholder="Ask about treats, events, allergies, your cart, or an order…"
+            aria-label="Message the bakery concierge"
             className="flex-1 px-4 py-3 rounded-2xl border text-sm outline-none"
             style={{ background: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
           />
           <button
             onClick={() => send(input)}
-            disabled={!input.trim()}
+            disabled={!input.trim() || typing}
+            aria-label="Send message"
             className="w-12 h-12 rounded-2xl flex items-center justify-center text-white transition hover:opacity-90 disabled:opacity-40"
             style={{ background: 'var(--primary)' }}
           >

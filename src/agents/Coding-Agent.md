@@ -17,9 +17,9 @@ This repository contains an AI-powered Frosted Corner ordering platform built wi
 - Azure OpenAI Services
 - Customer and Franchise Management Experiences
 
-The project contains multiple specialized AI agents located under:
+The project contains multiple specialized AI agents. They run on the Express server, call Azure OpenAI, and are located under:
 
-src/agents/
+server/agents/
 
 Current Agents:
 

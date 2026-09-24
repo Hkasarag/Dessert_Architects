@@ -1,6 +1,5 @@
 import { MongoClient } from "mongodb";
-
-process.loadEnvFile(new URL("../config.env", import.meta.url));
+import "../env.js";
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
