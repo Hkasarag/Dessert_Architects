@@ -39,6 +39,7 @@ The frontend and backend run as two separate processes. Pages that save or load 
 ### Frontend (`src/`)
 
 - `App.tsx` owns the router, the cart state (`CartItem[]`), and the global search query, and passes them down as props. There is no state library. `AuthGate` shows Login/SignUp until a user exists.
+- `context/ChatContext.tsx` holds both chat conversations (the customer concierge and the admin franchise chat) above the routes. Conversations survive page navigation and are cleared on sign-out. Chat pages read and send through `useChat(chatId)` instead of keeping local message state.
 - Routes are role-gated in `App.tsx`: `/` renders `AdminHome` for admins and `Home` for customers. `/analytics` and `/inventory` exist only for admins. `Sidebar.tsx` shows a different nav per role, so update both when adding a page.
 - `src/data/menuProducts.ts` is the customer menu used by Home, FullMenu, and Analytics (numeric ids, `price`, `unitCost`, `season`, with `isInSeason()` filtering seasonal items).
 - `src/data/IngredientProducts.ts` is the ingredient catalog used by Inventory and Analytics.

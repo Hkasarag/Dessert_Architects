@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { sendChatMessage, type ChatTurn } from '../lib/chatApi'
+import { useChat } from '../context/ChatContext'
 
 type SupplyItem = {
   id: number
@@ -223,40 +223,15 @@ export default function AdminHome() {
   )
 }
 
-type AdminMessage = {
-  id: number
-  role: 'admin' | 'assistant'
-  text: string
-  agentLabel?: string
-  isError?: boolean
-}
-
 function AdminChat() {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<AdminMessage[]>([])
-  const [thinking, setThinking] = useState(false)
+  // The conversation lives in ChatProvider, so it survives leaving and returning to this page.
+  const { messages, pending: thinking, send: sendToChat } = useChat('franchise')
 
-  const send = async (text: string) => {
+  const send = (text: string) => {
     if (!text.trim() || thinking) return
-    const id = Date.now()
-    const adminMsg: AdminMessage = { id, role: 'admin', text: text.trim() }
-    const history: ChatTurn[] = [...messages, adminMsg]
-      .filter(m => !m.isError)
-      .map(m => ({ role: m.role === 'admin' ? 'user' : 'assistant', content: m.text }))
-
-    setMessages(prev => [...prev, adminMsg])
     setInput('')
-    setThinking(true)
-
-    try {
-      const result = await sendChatMessage({ role: 'admin', messages: history })
-      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: result.reply, agentLabel: result.agent.label }])
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
-      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: message, isError: true }])
-    } finally {
-      setThinking(false)
-    }
+    sendToChat(text, { role: 'admin' })
   }
 
   return (
@@ -264,11 +239,11 @@ function AdminChat() {
       <div className="w-full">
         {messages.map(m => (
           <div key={m.id} className="mb-2">
-            <div className={`text-sm font-semibold ${m.role === 'admin' ? 'text-right' : ''}`}>
-              {m.role === 'admin' ? 'You' : 'Franchise Assistant'}
+            <div className={`text-sm font-semibold ${m.role === 'user' ? 'text-right' : ''}`}>
+              {m.role === 'user' ? 'You' : 'Franchise Assistant'}
               {m.agentLabel && <span className="font-normal" style={{ color: 'var(--muted-foreground)' }}> · {m.agentLabel}</span>}
             </div>
-            <div className="rounded-xl p-3" style={{ background: m.role === 'admin' ? 'var(--muted)' : m.isError ? '#FFF0F0' : 'var(--card)' }}>
+            <div className="rounded-xl p-3" style={{ background: m.role === 'user' ? 'var(--muted)' : m.isError ? '#FFF0F0' : 'var(--card)' }}>
               <div className="text-sm whitespace-pre-wrap" style={m.isError ? { color: '#C0392B' } : undefined}>{m.text}</div>
             </div>
           </div>

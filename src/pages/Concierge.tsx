@@ -1,16 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { CartItem } from '../App'
 import { useAuth } from '../context/AuthContext'
-import { sendChatMessage, type ChatTurn } from '../lib/chatApi'
-
-type Message = {
-  id: number
-  role: 'user' | 'assistant'
-  text: string
-  time: string
-  agentLabel?: string
-  isError?: boolean
-}
+import { useChat } from '../context/ChatContext'
 
 type Props = {
   cartItems: CartItem[]
@@ -25,71 +16,26 @@ const suggestions = [
   'What seasonal items are available now?',
 ]
 
-function formatTime() {
-  const now = new Date()
-  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-const WELCOME_ID = 0
-
 export default function Concierge({ cartItems }: Props) {
   const { user } = useAuth()
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: WELCOME_ID,
-      role: 'assistant',
-      text: "👋 Hello! I'm your bakery concierge. I can recommend treats, plan desserts for a party, suggest add-ons for your cart, help with allergies and dietary needs, or check on an order.",
-      time: formatTime(),
-      agentLabel: 'Orchestrator Agent',
-    },
-  ])
+  // The conversation lives in ChatProvider, so it survives leaving and returning to this page.
+  const { messages, pending: typing, send: sendToChat } = useChat('concierge')
   const [input, setInput] = useState('')
-  const [typing, setTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, typing])
 
-  const send = async (text: string) => {
+  const send = (text: string) => {
     if (!text.trim() || typing) return
-
-    const userMsg: Message = { id: Date.now(), role: 'user', text: text.trim(), time: formatTime() }
-    // The welcome message and error notices are UI-only, so they are not sent to the model.
-    const history: ChatTurn[] = [...messages, userMsg]
-      .filter(m => m.id !== WELCOME_ID && !m.isError)
-      .map(m => ({ role: m.role, content: m.text }))
-
-    setMessages(prev => [...prev, userMsg])
     setInput('')
-    setTyping(true)
-
-    try {
-      const result = await sendChatMessage({
-        role: 'customer',
-        messages: history,
-        customerId: user?.username,
-        cart: cartItems,
-        tasteProfile: user?.tasteProfile,
-      })
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        role: 'assistant',
-        text: result.reply,
-        time: formatTime(),
-        agentLabel: result.agent.label,
-      }])
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        role: 'assistant',
-        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
-        time: formatTime(),
-        isError: true,
-      }])
-    } finally {
-      setTyping(false)
-    }
+    sendToChat(text, {
+      role: 'customer',
+      customerId: user?.username,
+      cart: cartItems,
+      tasteProfile: user?.tasteProfile,
+    })
   }
 
   return (

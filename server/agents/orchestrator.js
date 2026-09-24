@@ -59,9 +59,11 @@ Choose the single specialist agent best suited to the latest user message. Use e
 
 Agents:
 ${AGENTS.map(agent => `- ${agent.id} (serves ${agent.role === "admin" ? "franchise admins" : "customers"}): ${agent.description}`).join("\n")}
-- ${ORCHESTRATOR.id}: greetings, messages too vague to route, or requests unrelated to the bakery. Write a short, friendly followUpQuestion that steers toward what this assistant can do.
+- ${ORCHESTRATOR.id}: only greetings, requests unrelated to the bakery, or messages where you truly cannot tell which agent fits. Write a short, friendly followUpQuestion that steers toward what this assistant can do. Never tell the user to go browse a page of the website.
 
-Pick the agent that fits the request even if it serves the other audience; access is enforced separately.`;
+Routing rules:
+- Any request to recommend, suggest, or pick treats goes to product_recommendation, even vague ones like "recommend me something good" or "what should I get?". Never send these to ${ORCHESTRATOR.id}.
+- Pick the agent that fits the request even if it serves the other audience; access is enforced separately.`;
 
 const agentPrompt = (agent, role, context) => `You are ${agent.name}, a specialist behind Frosted Corner bakery's ${EXPERIENCE[role].name}, talking with ${EXPERIENCE[role].audience}.
 Today is ${today()}. The current season is ${currentSeason()}.
@@ -70,6 +72,7 @@ ${agent.instructions}
 
 Ground rules:
 - Use only the reference data below and your tool results. Never invent products, prices, orders, policies, or numbers. If the data doesn't cover the question, say so plainly.
+- Answer directly with specific details from the data. Never reply by telling the user to browse a page of the website (Home, Menu, Profile) instead of answering. Mention a page only to explain how to buy or add something after you've answered.
 - Stay within your specialty. If asked for something outside it, briefly say what you can help with.
 - Tone: ${EXPERIENCE[role].tone}
 - Format for a plain-text chat bubble: no Markdown (no **, #, or tables). Use "• " bullets for lists. Format money like $3.50.

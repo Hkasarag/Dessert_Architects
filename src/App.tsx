@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ChatProvider } from './context/ChatContext'
 import Sidebar from './components/Sidebar'
 import TopNav from './components/TopNav'
 import Home from './pages/Home'
@@ -63,36 +64,38 @@ function AppShell() {
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0)
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
-      <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0">
-        <TopNav cartCount={cartCount} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <main className="flex-1 overflow-y-auto">
-          <Routes>
-            <Route path="/" element={
-              user.role === 'admin'
-                ? <AdminHome />
-                : <Home addToCart={addToCart} searchQuery={searchQuery} />
-            } />
-            <Route path="/menu" element={<FullMenu addToCart={addToCart} searchQuery={searchQuery} />} />
-            <Route path="/cart" element={<Cart items={cartItems} updateQty={updateQty} removeItem={removeItem} clearCart={clearCart} />} />
-            <Route path="/thankyou" element={<ThankYou />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/concierge" element={<Concierge cartItems={cartItems} />} />
-            <Route path="/subscriptions" element={<Subscriptions addToCart={addToCart} />} />
-            {user.role === 'admin' && (
-              <>
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/inventory" element={<Inventory />} />
-              </>
-            )}
-            <Route path="*" element={
-              user.role === 'admin' ? <AdminHome /> : <Home addToCart={addToCart} searchQuery={searchQuery} />
-            } />
-          </Routes>
-        </main>
+    <ChatProvider>
+      <div className="flex h-screen overflow-hidden" style={{ background: 'var(--background)' }}>
+        <Sidebar />
+        <div className="flex flex-col flex-1 min-w-0">
+          <TopNav cartCount={cartCount} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <main className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={
+                user.role === 'admin'
+                  ? <AdminHome />
+                  : <Home addToCart={addToCart} searchQuery={searchQuery} />
+              } />
+              <Route path="/menu" element={<FullMenu addToCart={addToCart} searchQuery={searchQuery} />} />
+              <Route path="/cart" element={<Cart items={cartItems} updateQty={updateQty} removeItem={removeItem} clearCart={clearCart} />} />
+              <Route path="/thankyou" element={<ThankYou />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/concierge" element={<Concierge cartItems={cartItems} />} />
+              <Route path="/subscriptions" element={<Subscriptions addToCart={addToCart} />} />
+              {user.role === 'admin' && (
+                <>
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                </>
+              )}
+              <Route path="*" element={
+                user.role === 'admin' ? <AdminHome /> : <Home addToCart={addToCart} searchQuery={searchQuery} />
+              } />
+            </Routes>
+          </main>
+        </div>
       </div>
-    </div>
+    </ChatProvider>
   )
 }
 
