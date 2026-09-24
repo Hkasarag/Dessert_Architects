@@ -2,50 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
 import { isInSeason, menuProducts, type MenuProduct } from '../data/menuProducts'
+import { featuredPromotions as promotions } from '../data/promotions'
 
 type Props = {
   addToCart: (item: Omit<CartItem, 'quantity'>) => void
   searchQuery: string
 }
-
-const promotions = [
-  {
-    id: 'p1',
-    emoji: '🍪',
-    name: 'Weekend Cookie Bundle',
-    description: '1 dozen assorted cookies — chocolate chip, snickerdoodle & oatmeal raisin',
-    discount: 'Save 20%',
-    code: 'COOKIE20',
-    color: '#FFF4E0',
-    accent: '#F4A361',
-    price: 18.00,
-    unitCost: 5.76,
-  },
-  {
-    id: 'p2',
-    emoji: '🎄',
-    name: 'Holiday Dessert Special',
-    description: 'Seasonal holiday dessert tray with peppermint bark, gingerbread & yule log',
-    discount: 'Save $10',
-    code: 'HOLIDAY10',
-    color: '#E8F5E9',
-    accent: '#4CAF50',
-    price: 42.00,
-    unitCost: 13.20,
-  },
-  {
-    id: 'p3',
-    emoji: '🎉',
-    name: 'Family Celebration Package',
-    description: 'Custom celebration cake + 2 dozen mini cupcakes, perfect for 20–30 guests',
-    discount: '15% Discount',
-    code: 'FAMILY15',
-    color: '#EDE7F6',
-    accent: '#9C27B0',
-    price: 68.00,
-    unitCost: 23.80,
-  },
-]
 
 const allProducts = menuProducts.filter(product => isInSeason(product.season))
 

@@ -2,6 +2,21 @@ import { createContext, useContext, useState, type ReactNode } from 'react'
 
 export type UserRole = 'customer' | 'admin'
 
+export type TasteProfile = {
+  favoriteBakedGoods: string[]
+  dietaryPreferences: string[]
+  recentInterests: string[]
+}
+
+const EMPTY_TASTE_PROFILE: TasteProfile = { favoriteBakedGoods: [], dietaryPreferences: [], recentInterests: [] }
+
+// The tags every account showed before taste profiles were stored per user.
+const DEMO_TASTE_PROFILE: TasteProfile = {
+  favoriteBakedGoods: ['Chocolate Treats', 'Seasonal Favorites', 'Cookies', 'Bundle Deals'],
+  dietaryPreferences: ['Plant-Based Options', 'Pollen-Free Treats'],
+  recentInterests: ['Fall Seasonal', 'Family Packages', 'Weekend Brunch'],
+}
+
 export type UserProfile = {
   username: string
   email: string
@@ -10,6 +25,7 @@ export type UserProfile = {
   address: string
   role: UserRole
   memberSince: string
+  tasteProfile: TasteProfile
 }
 
 type AuthContextType = {
@@ -47,6 +63,7 @@ const SEED_ACCOUNTS: Array<SignupData & { profile: UserProfile }> = [
       address: '42 Maple Lane, Springfield, IL 62701',
       role: 'customer',
       memberSince: 'March 2023',
+      tasteProfile: DEMO_TASTE_PROFILE,
     },
   },
   {
@@ -65,6 +82,7 @@ const SEED_ACCOUNTS: Array<SignupData & { profile: UserProfile }> = [
       address: '1 Bakery HQ Plaza, Chicago, IL 60601',
       role: 'admin',
       memberSince: 'January 2020',
+      tasteProfile: DEMO_TASTE_PROFILE,
     },
   },
 ]
@@ -100,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       address: data.address,
       role: data.role,
       memberSince: now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      tasteProfile: EMPTY_TASTE_PROFILE,
     }
     setAccounts(prev => [...prev, { ...data, profile }])
     setUser(profile)

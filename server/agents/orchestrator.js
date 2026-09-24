@@ -154,7 +154,7 @@ async function runAgent(agent, role, history, requestContext) {
  * Routes the latest message to a specialist agent and returns its reply.
  * history: [{ role: "user" | "assistant", content }], ending with the user's latest message.
  */
-export async function handleChat({ role, history, customerId, cart }) {
+export async function handleChat({ role, history, customerId, cart, tasteProfile }) {
   const route = await routeMessage(role, history);
   const agent = AGENTS_BY_ID.get(route.agent);
   const routing = { confidence: route.confidence, rationale: route.rationale };
@@ -176,6 +176,6 @@ export async function handleChat({ role, history, customerId, cart }) {
     };
   }
 
-  const reply = await runAgent(agent, role, history, { customerId, cart });
+  const reply = await runAgent(agent, role, history, { customerId, cart, tasteProfile });
   return { reply, agent: { id: agent.id, label: agent.label }, routing };
 }

@@ -70,6 +70,7 @@ export default function Concierge({ cartItems }: Props) {
         messages: history,
         customerId: user?.username,
         cart: cartItems,
+        tasteProfile: user?.tasteProfile,
       })
       setMessages(prev => [...prev, {
         id: Date.now() + 1,

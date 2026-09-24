@@ -47,13 +47,13 @@ The frontend and backend run as two separate processes. Pages that save or load 
 
 ### Agent system (`server/agents/`)
 
-Request flow: the chat UI posts the conversation to `POST /chat` with the user's role, and the customer's username and cart for customers. `orchestrator.js` asks the model to pick one agent using a strict JSON schema. It blocks any agent that belongs to the other role, then runs the chosen agent with its own system prompt and data. `src/lib/chatApi.ts` is the client for this endpoint.
+Request flow: the chat UI posts the conversation to `POST /chat` with the user's role. For customers it also sends their username, cart, and taste profile. The taste profile is stored on the user in `src/context/AuthContext.tsx` and shown on the Profile page. `orchestrator.js` asks the model to pick one agent using a strict JSON schema. It blocks any agent that belongs to the other role, then runs the chosen agent with its own system prompt and data. `src/lib/chatApi.ts` is the client for this endpoint.
 
 - Customer agents: productRecommendation, partyPlanner, cartOptimization, nutritionalAllergy, customerService. They are used by `pages/Concierge.tsx`.
 - Admin agents: franchiseReordering and promotionRecommendation. They are used by the chat on `pages/AdminHome.tsx`.
 - Each agent module exports `id`, `role`, `description` (read by the router), `instructions`, and `buildContext()`, and can export `tools`. To add an agent, create the module and add it to the `AGENTS` list in `orchestrator.js`.
 - Keep arithmetic and safety decisions in deterministic tools, not in the model. Examples are `price_party_order`, `find_safe_menu_items`, and `simulate_promotion`, plus the precomputed reorder plan.
-- `agents/data.js` builds each agent's grounding data. Customer agents must never receive costs, margins, sales, or inventory. Menu prices come from `src/data/menuProducts.ts`. Allergens are joined by name from `src/agents/menuDataset.ts`, and promotions come from `src/agents/types.ts`. Orders, sales, and purchase orders are read from MongoDB with a 4-second timeout that falls back to empty data.
+- `agents/data.js` builds each agent's grounding data. Customer agents must never receive costs, margins, sales, or inventory. Menu prices come from `src/data/menuProducts.ts`. Allergens and each item's product type are joined by name from `src/agents/menuDataset.ts`. Customer-facing promotions come from `src/data/promotions.ts`, which the Home page and Cart also use. The admin promotion agent still uses the mock list in `src/agents/types.ts`. Orders, sales, and purchase orders are read from MongoDB with a 4-second timeout that falls back to empty data.
 - `server/ai/azureClient.js` uses the classic versioned Azure API when `AZURE_OPENAI_API_VERSION` is set, and Azure's v1 API otherwise.
 
 ### Backend (`server/`)

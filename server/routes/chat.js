@@ -26,12 +26,24 @@ const parseCart = cart =>
     isSubscription: Boolean(item?.isSubscription),
   })).filter(item => item.name && item.quantity > 0);
 
+const MAX_TAGS = 20;
+const TASTE_PROFILE_FIELDS = ["favoriteBakedGoods", "dietaryPreferences", "recentInterests"];
+
+const parseTasteProfile = profile =>
+  Object.fromEntries(TASTE_PROFILE_FIELDS.map(field => [
+    field,
+    (Array.isArray(profile?.[field]) ? profile[field] : [])
+      .filter(tag => typeof tag === "string" && tag.trim())
+      .slice(0, MAX_TAGS)
+      .map(tag => tag.trim().slice(0, 60)),
+  ]));
+
 /*
  Send a chat turn to the agent orchestrator.
- Body: { role: "customer" | "admin", messages: [{ role, content }], customerId?, cart? }
+ Body: { role: "customer" | "admin", messages: [{ role, content }], customerId?, cart?, tasteProfile? }
 */
 router.post("/", async (req, res) => {
-  const { role, messages, customerId, cart } = req.body ?? {};
+  const { role, messages, customerId, cart, tasteProfile } = req.body ?? {};
 
   if (!ROLES.has(role)) {
     return res.status(400).json({ error: "role must be \"customer\" or \"admin\"." });
@@ -45,9 +57,10 @@ router.post("/", async (req, res) => {
     const result = await handleChat({
       role,
       history,
-      // Admins never get customer order history or cart data.
+      // Admins never get customer order history, cart, or taste profile data.
       customerId: role === "customer" && typeof customerId === "string" ? customerId.trim() : "",
       cart: role === "customer" ? parseCart(cart) : [],
+      tasteProfile: role === "customer" ? parseTasteProfile(tasteProfile) : parseTasteProfile(null),
     });
     res.status(200).json(result);
   } catch (error) {

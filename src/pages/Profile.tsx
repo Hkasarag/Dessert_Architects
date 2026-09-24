@@ -103,6 +103,12 @@ export default function Profile() {
     logout()
   }
 
+  const tasteGroups = [
+    { title: 'FAVORITE BAKED GOODS', tags: user?.tasteProfile.favoriteBakedGoods ?? [], style: { background: 'var(--muted)', color: 'var(--foreground)' } },
+    { title: 'DIETARY PREFERENCES', tags: user?.tasteProfile.dietaryPreferences ?? [], style: { background: '#FFF0E0', color: '#C47A00' } },
+    { title: 'RECENT INTERESTS', tags: user?.tasteProfile.recentInterests ?? [], style: { background: 'var(--muted)', color: 'var(--foreground)' } },
+  ]
+
   const displayName = user?.username ?? 'User'
   const initial = displayName[0]?.toUpperCase() ?? '?'
 
@@ -172,33 +178,20 @@ export default function Profile() {
         <section className="rounded-2xl border p-6" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
           <h2 className="text-xl font-bold mb-5" style={{ fontFamily: 'Fraunces, serif' }}>✨ Taste Profile</h2>
           <div className="space-y-4">
-            <div>
-              <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>FAVORITE BAKED GOODS</div>
-              <div className="flex flex-wrap gap-2">
-                {['Chocolate Treats', 'Seasonal Favorites', 'Cookies', 'Bundle Deals'].map(t => (
-                  <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={{ background: 'var(--muted)', color: 'var(--foreground)' }}>{t}</span>
-                ))}
+            {tasteGroups.map(group => (
+              <div key={group.title}>
+                <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>{group.title}</div>
+                {group.tags.length === 0 ? (
+                  <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Nothing added yet.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {group.tags.map(t => (
+                      <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={group.style}>{t}</span>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-            <div>
-              <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>DIETARY PREFERENCES</div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                    'Plant-Based Options',
-                    'Pollen-Free Treats',
-                  ].map(t => (
-                  <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={{ background: '#FFF0E0', color: '#C47A00' }}>{t}</span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-semibold mb-2" style={{ color: 'var(--muted-foreground)' }}>RECENT INTERESTS</div>
-              <div className="flex flex-wrap gap-2">
-                {['Fall Seasonal', 'Family Packages', 'Weekend Brunch'].map(t => (
-                  <span key={t} className="px-3 py-1 rounded-full text-sm font-semibold" style={{ background: 'var(--muted)', color: 'var(--foreground)' }}>{t}</span>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
           <button className="mt-5 text-sm font-semibold" style={{ color: 'var(--primary)' }}>Update Taste Profile →</button>
         </section>
