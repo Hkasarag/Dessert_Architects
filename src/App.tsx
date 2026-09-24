@@ -78,7 +78,7 @@ function AppShell() {
             <Route path="/cart" element={<Cart items={cartItems} updateQty={updateQty} removeItem={removeItem} clearCart={clearCart} />} />
             <Route path="/thankyou" element={<ThankYou />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/concierge" element={<Concierge />} />
+            <Route path="/concierge" element={<Concierge cartItems={cartItems} />} />
             <Route path="/subscriptions" element={<Subscriptions addToCart={addToCart} />} />
             {user.role === 'admin' && (
               <>
