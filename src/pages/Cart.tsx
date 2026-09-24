@@ -2,19 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
 import { useAuth } from '../context/AuthContext'
+import { promoCodes as PROMO_CODES } from '../data/promotions'
 
 type Props = {
   items: CartItem[]
   updateQty: (id: number, delta: number) => void
   removeItem: (id: number) => void
   clearCart: () => void
-}
-
-const PROMO_CODES: Record<string, { type: 'pct' | 'flat'; value: number; label: string }> = {
-  COOKIE20: { type: 'pct', value: 0.20, label: '20% off — Weekend Cookie Bundle' },
-  HOLIDAY10: { type: 'flat', value: 10, label: '$10 off — Holiday Dessert Special' },
-  FAMILY15: { type: 'pct', value: 0.15, label: '15% off — Family Celebration Package' },
-  WELCOME10: { type: 'pct', value: 0.10, label: '10% off — Welcome offer' },
 }
 
 export default function Cart({ items, updateQty, removeItem, clearCart }: Props) {

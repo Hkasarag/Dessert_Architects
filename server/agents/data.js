@@ -7,6 +7,7 @@
 import { menuProducts, getCurrentSeason, isInSeason } from "../../src/data/menuProducts.ts";
 import { ingredientProducts } from "../../src/data/IngredientProducts.ts";
 import { subscriptionPlans } from "../../src/data/subscriptionPlans.ts";
+import { featuredPromotions, promoCodes } from "../../src/data/promotions.ts";
 import { menuDataset } from "../../src/agents/menuDataset.ts";
 import { activePromotions } from "../../src/agents/types.ts";
 import db from "../db/connection.js";
@@ -27,6 +28,8 @@ const MENU = menuProducts.map(product => {
     productId: product.id,
     name: cleanProductName(product.name),
     category: product.cat,
+    // Cookies, Brownies, Cupcakes, or Other. Seasonal items keep their underlying type here.
+    productType: info ? info.category : null,
     description: product.desc,
     price: product.price,
     unitCost: product.unitCost,
@@ -73,6 +76,24 @@ export const subscriptionPlanSummaries = () =>
   }));
 
 export const configuredPromotions = () => activePromotions;
+
+/** Promotions customers can see and redeem: Home page bundles plus checkout promo codes. */
+export const customerPromotions = () => {
+  const featuredCodes = new Set(featuredPromotions.map(promo => promo.code));
+  return {
+    featuredBundles: featuredPromotions.map(promo => ({
+      name: promo.name,
+      description: promo.description,
+      bundlePrice: promo.price,
+      discount: promo.discount,
+      promoCode: promo.code,
+      howToGet: "Add it from the Featured Promotions section on the Home page, then enter the code at checkout.",
+    })),
+    otherPromoCodes: Object.entries(promoCodes)
+      .filter(([code]) => !featuredCodes.has(code))
+      .map(([code, promo]) => ({ promoCode: code, offer: promo.label })),
+  };
+};
 
 // Same thresholds as the Inventory page's stockStatus().
 const stockStatus = item => {
@@ -176,6 +197,65 @@ export const getCustomerOrders = async (customerId, limit = 10) => {
       })),
     }));
   }, []);
+};
+
+/**
+ * The customer's order history plus a per-product summary, so the model can see
+ * favorites and buying patterns without tallying orders itself.
+ */
+export const getCustomerPurchaseHistory = async (customerId, limit = 50) => {
+  const empty = { totalOrders: 0, productsPurchased: [], productTypeTotals: [], recentOrders: [] };
+  if (!customerId) return empty;
+
+  return safeQuery("customer purchase history", async () => {
+    const orders = await db.collection("orders")
+      .find({ customerId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .toArray();
+    if (orders.length === 0) return empty;
+
+    const products = new Map();
+    for (const order of orders) {
+      for (const item of order.items ?? []) {
+        const name = cleanProductName(item.productName ?? "");
+        if (!name) continue;
+        const menuItem = findMenuItem(name);
+        const entry = products.get(name) ?? {
+          productName: name,
+          onMenu: Boolean(menuItem),
+          productType: menuItem?.productType ?? "Bundle or subscription",
+          totalQuantity: 0,
+          timesOrdered: 0,
+          lastOrderedAt: order.createdAt,
+        };
+        entry.totalQuantity += Number(item.quantity) || 0;
+        entry.timesOrdered += 1;
+        if (order.createdAt > entry.lastOrderedAt) entry.lastOrderedAt = order.createdAt;
+        products.set(name, entry);
+      }
+    }
+
+    const productsPurchased = [...products.values()].sort((a, b) => b.totalQuantity - a.totalQuantity);
+    const typeTotals = new Map();
+    for (const product of productsPurchased) {
+      typeTotals.set(product.productType, (typeTotals.get(product.productType) ?? 0) + product.totalQuantity);
+    }
+
+    return {
+      totalOrders: orders.length,
+      firstOrderAt: orders.at(-1).createdAt,
+      lastOrderAt: orders[0].createdAt,
+      productsPurchased,
+      productTypeTotals: [...typeTotals.entries()]
+        .map(([productType, totalQuantity]) => ({ productType, totalQuantity }))
+        .sort((a, b) => b.totalQuantity - a.totalQuantity),
+      recentOrders: orders.slice(0, 5).map(order => ({
+        placedOn: order.createdAt,
+        items: (order.items ?? []).map(item => ({ productName: cleanProductName(item.productName ?? ""), quantity: item.quantity })),
+      })),
+    };
+  }, { ...empty, note: "Order history could not be loaded right now." });
 };
 
 /** Sales totals per product across recorded customer orders. */

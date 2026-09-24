@@ -1,4 +1,5 @@
 import type { CartItem } from '../App'
+import type { TasteProfile } from '../context/AuthContext'
 
 const API_BASE_URL = 'http://localhost:5050'
 
@@ -19,10 +20,11 @@ type SendChatParams = {
   messages: ChatTurn[]
   customerId?: string
   cart?: CartItem[]
+  tasteProfile?: TasteProfile
 }
 
 /** Sends the conversation to the server-side agent orchestrator (Azure OpenAI). */
-export async function sendChatMessage({ role, messages, customerId, cart }: SendChatParams): Promise<ChatReply> {
+export async function sendChatMessage({ role, messages, customerId, cart, tasteProfile }: SendChatParams): Promise<ChatReply> {
   const response = await fetch(`${API_BASE_URL}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -30,6 +32,7 @@ export async function sendChatMessage({ role, messages, customerId, cart }: Send
       role,
       messages,
       customerId,
+      tasteProfile,
       cart: cart?.map(item => ({
         name: item.name,
         quantity: item.quantity,
