@@ -1,4 +1,5 @@
 import { orderStatusData } from './types'
+import { searchFuzzy } from './menuDataset'
 
 export function customerServiceAgent(message: string) {
   const lower = message.toLowerCase()
@@ -45,9 +46,32 @@ export function customerServiceAgent(message: string) {
     }
   }
 
+  // If user asks for recommendations or similar items, delegate to dataset search
+  const similarMatch = lower.match(/similar to ([a-z0-9\s\-\'\,]+)/i)
+  if (similarMatch) {
+    const query = similarMatch[1]
+    const results = searchFuzzy(query, 5)
+    if (results.length) {
+      return {
+        issueType: 'similar_items',
+        response: `Here are items similar to "${query.trim()}": ${results.map(r => r.name).join(', ')}.`,
+        suggestions: results.map(r => ({ name: r.name, price: `$${r.price.toFixed(2)}`, description: r.description })),
+        escalationNeeded: false,
+      }
+    }
+  }
+
+  if (/subscription|subscribe|plan/.test(lower)) {
+    return {
+      issueType: 'subscription',
+      response: 'Our subscription plans include monthly dessert boxes and family plans. I can summarize options or help sign you up.',
+      escalationNeeded: false,
+    }
+  }
+
   return {
     issueType: 'unsupported',
-    response: 'I can help with order status, shipping, returns, refunds, or store information. Please provide more details about your request.',
+    response: 'I can help with order status, shipping, returns, refunds, store information, or find similar desserts. Please provide more details about your request.',
     escalationNeeded: true,
   }
 }

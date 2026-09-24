@@ -4,6 +4,7 @@ import {
   routeCustomerIntent,
   type AgentIntent,
 } from '../agents/router'
+import { formatAgentResponse } from '../agents/responseFormatter'
 
 type Message = {
   id: number
@@ -44,24 +45,11 @@ function summarizeIntent(intent: AgentIntent) {
 }
 
 function renderStructuredResponse(route: ReturnType<typeof routeCustomerIntent>, result: unknown) {
+  // kept for backward compatibility; not used after switching to formatAgentResponse
   const intentLabel = summarizeIntent(route.intent)
-  const summaryMap: Record<AgentIntent, string> = {
-    product_recommendation: 'Recommended desserts based on customer behavior and verified catalog data.',
-    promotion_recommendation: 'Relevant active promotions matched to the customer profile and prior buying behavior.',
-    party_planning: 'Event order recommendation built from guest count, budget, and product pricing.',
-    franchise_reordering: 'Inventory reorder guidance based on safety stock, lead time, and sales velocity.',
-    customer_service: 'Support response grounded in order and policy data only.',
-    cart_optimization: 'Upsell and cross-sell recommendations based on basket affinity and inventory-backed products.',
-    nutritional_allergy: 'Restricted-ingredient filtering to recommend safe products only.',
-    clarification_required: 'The request needs a bit more clarification before routing.',
-  }
-
-  const summary = summaryMap[route.intent]
-  const json = JSON.stringify(result, null, 2)
-
   return {
-    text: `${summary}\n\nRoute: ${intentLabel}\nConfidence: ${route.confidence.toFixed(2)}`,
-    jsonPayload: json,
+    text: `Routed to: ${intentLabel} — ${route.rationale}`,
+    jsonPayload: undefined,
     agentLabel: intentLabel,
   }
 }
@@ -95,15 +83,14 @@ export default function Concierge() {
     setTimeout(() => {
       const route = routeCustomerIntent(text)
       const result = executeAgentByIntent(route.intent, text, 'customer')
-      const assistantResponse = renderStructuredResponse(route, result)
+      const formatted = formatAgentResponse(route, result)
 
       const resp: Message = {
         id: Date.now() + 1,
         role: 'assistant',
-        text: assistantResponse.text,
+        text: formatted,
         time: formatTime(),
-        agentLabel: assistantResponse.agentLabel,
-        jsonPayload: assistantResponse.jsonPayload,
+        agentLabel: summarizeIntent(route.intent),
       }
 
       setTyping(false)

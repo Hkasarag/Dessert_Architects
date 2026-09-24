@@ -1,4 +1,4 @@
-import { productCatalog } from './types'
+import { safeOptions } from './menuDataset'
 
 export function nutritionalAllergyAgent(message: string) {
   const lower = message.toLowerCase()
@@ -10,15 +10,14 @@ export function nutritionalAllergyAgent(message: string) {
   if (/gluten|wheat/.test(lower)) allergens.push('wheat')
   if (/egg/.test(lower)) allergens.push('eggs')
 
-  const safeProducts = productCatalog.filter(item => {
-    if (allergens.length === 0) return true
-    return !item.allergens.some(allergen => allergens.includes(allergen))
-  })
+  // If no allergen specified, ask for clarification
+  if (allergens.length === 0) {
+    return { message: 'Which allergen are you concerned about? For example: peanuts, dairy, gluten, eggs, or tree nuts.' }
+  }
+
+  const safe = safeOptions(allergens, 6)
 
   return {
-    safeProducts: safeProducts.slice(0, 3).map(item => ({
-      productName: item.name,
-      reason: 'Contains no restricted allergens and is suitable for a cautious dietary review.',
-    })),
+    safeProducts: safe.map(p => ({ productName: p.name, reason: 'This item does not list the specified allergen and is commonly safe, but please verify with staff if you have severe allergies.' })),
   }
 }

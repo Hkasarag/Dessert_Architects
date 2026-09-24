@@ -268,15 +268,17 @@ function AdminChat() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{ id: number; role: 'admin' | 'assistant'; text: string; payload?: string }[]>([])
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim()) return
     const id = Date.now()
     setMessages(prev => [...prev, { id, role: 'admin', text }])
     setInput('')
     const route = routeAdminIntent(text)
     const result = executeAgentByIntent(route.intent, text, 'admin')
+    const { formatAgentResponse } = await import('../agents/responseFormatter')
+    const formatted = formatAgentResponse(route, result)
     setTimeout(() => {
-      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: route.rationale, payload: JSON.stringify(result, null, 2) }])
+      setMessages(prev => [...prev, { id: id + 1, role: 'assistant', text: formatted }])
     }, 600)
   }
 
