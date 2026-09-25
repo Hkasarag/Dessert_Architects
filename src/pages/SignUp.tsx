@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BrandLogo from '../components/BrandLogo'
 import { useAuth, type SignupData, type UserRole } from '../context/AuthContext'
 
 type Props = { onGoLogin: () => void }
@@ -48,11 +49,8 @@ export default function SignUp({ onGoLogin }: Props) {
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-md"
-            style={{ background: 'var(--primary)' }}
-          >🥐</div>
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Join Frosted Corners</h1>
+          <BrandLogo className="w-44 h-44 mx-auto" />
+          <h1 className="text-3xl font-bold -mt-2" style={{ fontFamily: 'Fraunces, serif' }}>Join Frosted Corner</h1>
           <p className="mt-1.5 text-sm" style={{ color: 'var(--muted-foreground)' }}>Fresh treats, personalized for you</p>
         </div>
 

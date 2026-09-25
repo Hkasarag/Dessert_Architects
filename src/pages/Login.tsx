@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import BrandLogo from '../components/BrandLogo'
 
 type Props = { onGoSignup: () => void }
 
@@ -27,13 +28,10 @@ export default function Login({ onGoSignup }: Props) {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--background)' }}>
       <div className="w-full max-w-md">
         {/* Brand */}
-        <div className="text-center mb-10">
-          <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 shadow-lg"
-            style={{ background: 'var(--primary)' }}
-          >🥐</div>
-          <h1 className="text-4xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>Frosted Corners</h1>
-          <p className="mt-2 text-base" style={{ color: 'var(--muted-foreground)' }}>Your neighborhood AI Dessert Shop</p>
+        <div className="text-center mb-8">
+          <h1 className="sr-only">Frosted Corner</h1>
+          <BrandLogo className="w-60 h-60 mx-auto" />
+          <p className="-mt-2 text-base" style={{ color: 'var(--muted-foreground)' }}>Your neighborhood AI Dessert Shop</p>
         </div>
 
         <div className="rounded-3xl border p-8 shadow-sm" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
