@@ -115,6 +115,7 @@ function CustomerProfile({ addToCart }: Props) {
   const [historyLoading, setHistoryLoading] = useState(true)
   const [historyError, setHistoryError] = useState('')
   const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null)
+  const [loyaltyUnavailable, setLoyaltyUnavailable] = useState(false)
   const [reorderStatus, setReorderStatus] = useState<ReorderStatus | null>(null)
 
   useEffect(() => {
@@ -122,7 +123,10 @@ function CustomerProfile({ addToCart }: Props) {
     const controller = new AbortController()
     fetchLoyaltyBalance(user.username, controller.signal)
       .then(summary => setLoyaltyBalance(summary.balance))
-      .catch(() => { /* the Rewards card shows a dash when points can't load */ })
+      .catch(error => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setLoyaltyUnavailable(true)
+      })
     return () => controller.abort()
   }, [user?.username])
 
@@ -261,7 +265,9 @@ function CustomerProfile({ addToCart }: Props) {
             <div className="text-3xl font-bold mb-1">{loyaltyBalance === null ? '—' : loyaltyBalance.toLocaleString('en-US')}</div>
             <div className="text-sm opacity-85">Loyalty Points</div>
             <div className="mt-3 text-sm opacity-85">
-              = ${((loyaltyBalance ?? 0) * LOYALTY.pointValue).toFixed(2)} in bakery credit
+              {loyaltyBalance !== null
+                ? `= $${(loyaltyBalance * LOYALTY.pointValue).toFixed(2)} in bakery credit`
+                : loyaltyUnavailable ? 'Points are unavailable right now. Please try again later.' : 'Loading points…'}
             </div>
           </div>
           <div className="space-y-2 text-sm">
