@@ -61,7 +61,7 @@ export default function Sidebar() {
           </div>
           <div>
             <div className="font-bold text-lg leading-tight" style={{ fontFamily: 'Fraunces, serif', color: 'var(--foreground)' }}>
-              Crumb & Joy
+              Frosted Corner
             </div>
             <div className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
               {isAdmin ? 'Admin Portal' : 'Dessert Shop'}
