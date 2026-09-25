@@ -414,3 +414,19 @@ export async function getSalesAnalytics(requestedKey) {
   detailCache.set(key, result);
   return result;
 }
+
+// Shared with the sales forecast (salesForecast.js).
+export {
+  getDataset as getSalesDataset,
+  monthRows,
+  summarize,
+  shiftMonth,
+  monthLabel,
+  daysInMonth,
+  seasonOfMonth,
+  addDays,
+  round,
+  pctChange,
+  PRODUCT_SEASON,
+  USAGE_WINDOW_DAYS,
+};

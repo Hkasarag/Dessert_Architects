@@ -30,6 +30,7 @@ Current Agents:
 - partyPlannerAgent
 - productRecommendationAgent
 - promotionRecommendationAgent
+- salesForecastAgent
 
 ---
 
@@ -82,6 +83,7 @@ Admin Agents:
 
 - franchiseReorderingAgent
 - promotionRecommendationAgent
+- salesForecastAgent
 
 Admin Capabilities:
 
