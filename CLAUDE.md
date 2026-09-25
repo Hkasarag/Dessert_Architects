@@ -64,6 +64,7 @@ Plain ESM JavaScript Express 5 app using the native `mongodb` driver (mongoose i
 - `db/connection.js` loads `server/config.env` via `process.loadEnvFile` and connects at import time using top-level await. It needs `MONGODB_URI`.
 - `GET /orders?customerId=&limit=` and `POST /orders` use the `orders` collection. Customer orders use the username as `customerId`. Every item needs `unitCost > 0`, so keep `unitCost` on menu products and cart items.
 - `GET /inventory?locationId=&limit=` and `POST /inventory` use the `inventory` collection for ingredient purchase transactions (default `locationId` is `ATL001`).
+- `GET /analytics/sales?month=YYYY-MM` powers the admin Analytics page. `server/analytics/salesAnalytics.js` parses the newest CSV in `server/sales_data/` once, then caches each month's KPIs, 12-month trends, product popularity, subscription mix, insights, and inventory estimates. A partial latest month is compared with the same days of the previous month. Ingredient runout estimates use the last 28 days of sales times the per-item amounts in `server/analytics/recipeUsage.js`, which are planning assumptions, not real recipes.
 - `POST /chat` is the agent orchestrator described above. It returns 503 when Azure OpenAI isn't configured.
 - **Routing quirk:** `POST /orders` first runs `createInventory`. If the body has a `lineItems` array, it is stored as an inventory transaction; otherwise it falls through to the customer order router. `AdminHome` bulk orders rely on this.
 - List endpoints default to 3 results, capped at 50.
