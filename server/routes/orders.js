@@ -1,6 +1,7 @@
 import express from "express";
 import db from "../db/connection.js";
 import { randomUUID } from "node:crypto";
+import { getLoyaltySummary, LOYALTY, maxPointsFor, pointsEarnedFor } from "../loyalty.js";
 
 const router = express.Router();
 const orders = () => db.collection("orders");
@@ -41,6 +42,11 @@ const buildOrder = body => {
     return { error: "Order totals must be non-negative numbers." };
   }
 
+  const loyaltyPointsRedeemed = body.loyaltyPointsRedeemed === undefined ? 0 : Number(body.loyaltyPointsRedeemed);
+  if (!Number.isInteger(loyaltyPointsRedeemed) || loyaltyPointsRedeemed < 0) {
+    return { error: "Loyalty points must be a whole number of zero or more." };
+  }
+
   return {
     order: {
       orderId: String(body.orderId || randomUUID()),
@@ -52,6 +58,10 @@ const buildOrder = body => {
       tax,
       total,
       items,
+      loyaltyPointsRedeemed,
+      loyaltyDiscount: Math.round(loyaltyPointsRedeemed * LOYALTY.pointValue * 100) / 100,
+      // Orders paid partly with points don't earn new points.
+      loyaltyPointsEarned: loyaltyPointsRedeemed > 0 ? 0 : pointsEarnedFor(total),
     },
   };
 };
@@ -87,8 +97,24 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error });
     }
 
+    if (order.loyaltyPointsRedeemed > 0) {
+      if (!order.customerId) {
+        return res.status(400).json({ error: "Sign in to use loyalty points." });
+      }
+      const { balance } = await getLoyaltySummary(order.customerId);
+      if (order.loyaltyPointsRedeemed > balance) {
+        return res.status(400).json({ error: `You only have ${balance.toLocaleString("en-US")} loyalty points.` });
+      }
+      // subtotal is the amount after promo codes and before tax; points can't exceed it.
+      const maxPoints = maxPointsFor(order.subtotal);
+      if (order.loyaltyPointsRedeemed > maxPoints) {
+        return res.status(400).json({ error: `This order can use at most ${maxPoints.toLocaleString("en-US")} loyalty points.` });
+      }
+    }
+
     const result = await orders().insertOne(order);
-    res.status(201).json({ ...order, _id: result.insertedId });
+    const { balance } = order.customerId ? await getLoyaltySummary(order.customerId) : { balance: 0 };
+    res.status(201).json({ ...order, _id: result.insertedId, loyaltyBalance: balance });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error creating order." });

@@ -1,7 +1,8 @@
 import { customerMenu, getCustomerOrders, subscriptionPlanSummaries } from "./data.js";
+import { storeHoursText } from "../../src/data/storeInfo.ts";
 
 const POLICIES = {
-  storeHours: "Monday to Saturday 8:00 AM to 6:00 PM, Sunday 9:00 AM to 2:00 PM.",
+  storeHours: `${storeHoursText}.`,
   delivery: "Standard delivery takes 2 to 5 business days. Expedited delivery may be available depending on location and order timing.",
   cancellations: "The assistant cannot cancel orders. Customers contact the support team with their order number to request a cancellation.",
   refundsAndReturns: "Refund eligibility depends on the order status and item condition. The assistant can explain the policy, but the support team makes the final decision.",

@@ -82,7 +82,7 @@ export default function Sidebar() {
             <ChartIcon /> Business Analytics
           </NavLink>
           <NavLink to="/concierge" className={linkClass} style={({ isActive }) => isActive ? activeStyle : {}}>
-            <ConciergeIcon /> Bakery Concierge
+            <ConciergeIcon /> Dessert Concierge
           </NavLink>
         </>
       ) : (
@@ -94,7 +94,7 @@ export default function Sidebar() {
             <CartIcon /> My Cart
           </NavLink>
           <NavLink to="/concierge" className={linkClass} style={({ isActive }) => isActive ? activeStyle : {}}>
-            <ConciergeIcon /> Bakery Concierge
+            <ConciergeIcon /> Dessert Concierge
           </NavLink>
           <NavLink to="/subscriptions" className={linkClass} style={({ isActive }) => isActive ? activeStyle : {}}>
             <SubIcon /> Subscriptions

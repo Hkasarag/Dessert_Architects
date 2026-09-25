@@ -24,7 +24,7 @@ export default function Subscriptions({ addToCart }: Props) {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="text-center mb-10">
         <h1 className="text-4xl font-bold mb-3">
           Frosted Bakery Memberships
@@ -34,7 +34,7 @@ export default function Subscriptions({ addToCart }: Props) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-md md:max-w-none mx-auto">
         {plans.map(plan => (
           <div
             key={plan.id}
@@ -100,7 +100,7 @@ export default function Subscriptions({ addToCart }: Props) {
         <div className="text-2xl mb-3">🤝</div>
         <h3 className="font-bold text-lg mb-2" style={{ fontFamily: 'Fraunces, serif' }}>Need help choosing?</h3>
         <p className="text-sm mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          Our Bakery Concierge can recommend the membership that gives you the most value based on your favorite treats and shopping habits.
+          Our Dessert Concierge can recommend the membership that gives you the most value based on your favorite treats and shopping habits.
         </p>
         <a
           href="/concierge"

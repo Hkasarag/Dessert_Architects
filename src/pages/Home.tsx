@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
 import { isInSeason, menuProducts, type MenuProduct } from '../data/menuProducts'
 import { featuredPromotions as promotions } from '../data/promotions'
+import { cartItemFromBundle, cartItemFromMenuProduct, menuImageUrl } from '../lib/cartItems'
 
 type Props = {
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
   searchQuery: string
 }
 
@@ -21,21 +22,13 @@ const categories = [
 
 function ProductCard({ product, addToCart }: {
   product: MenuProduct
-  addToCart: (item: Omit<CartItem, 'quantity'>) => void
+  addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
 }) {
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
 
   const handleAdd = () => {
-    for (let i = 0; i < qty; i++) {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        unitCost: product.unitCost,
-        image: `https://images.unsplash.com/${product.image}?w=200&h=200&fit=crop&auto=format`,
-      })
-    }
+    addToCart(cartItemFromMenuProduct(product), qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 1800)
   }
@@ -44,7 +37,7 @@ function ProductCard({ product, addToCart }: {
     <div className="rounded-2xl overflow-hidden shadow-sm border flex flex-col" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
       <div className="h-40 overflow-hidden bg-amber-50">
         <img
-          src={`https://images.unsplash.com/${product.image}?w=400&h=300&fit=crop&auto=format`}
+          src={menuImageUrl(product.image, 400, 300)}
           alt={product.name}
           className="w-full h-full object-cover"
         />
@@ -210,7 +203,7 @@ export default function Home({ addToCart, searchQuery }: Props) {
                 <button
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition hover:opacity-90"
                   style={{ background: p.accent }}
-                  onClick={() => addToCart({ id: parseInt('9' + p.id.replace('p', '')), name: p.name, price: p.price, unitCost: p.unitCost, image: '' })}
+                  onClick={() => addToCart(cartItemFromBundle(p))}
                 >
                   Add To Cart
                 </button>

@@ -40,14 +40,14 @@ function AppShell() {
 
   if (!user) return <AuthGate />
 
-  const addToCart = (item: Omit<CartItem, 'quantity'>) => {
+  const addToCart = (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
     setCartItems(prev => {
       const existing = prev.find(i => i.id === item.id)
       if (existing) {
         if (item.isSubscription) return prev
-        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)
+        return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i)
       }
-      return [...prev, { ...item, quantity: 1 }]
+      return [...prev, { ...item, quantity: item.isSubscription ? 1 : quantity }]
     })
   }
 
@@ -79,7 +79,7 @@ function AppShell() {
               <Route path="/menu" element={<FullMenu addToCart={addToCart} searchQuery={searchQuery} />} />
               <Route path="/cart" element={<Cart items={cartItems} updateQty={updateQty} removeItem={removeItem} clearCart={clearCart} />} />
               <Route path="/thankyou" element={<ThankYou />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<Profile addToCart={addToCart} />} />
               <Route path="/concierge" element={<Concierge cartItems={cartItems} />} />
               <Route path="/subscriptions" element={<Subscriptions addToCart={addToCart} />} />
               {user.role === 'admin' && (
