@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import BrandLogo from './BrandLogo'
 
 const HomeIcon = () => (
   <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -51,22 +52,10 @@ export default function Sidebar() {
       className="w-64 flex-shrink-0 flex flex-col py-6 px-4 gap-2 border-r"
       style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
     >
-      <div className="mb-6 px-2">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
-            style={{ background: 'var(--primary)' }}
-          >
-            🥐
-          </div>
-          <div>
-            <div className="font-bold text-lg leading-tight" style={{ fontFamily: 'Fraunces, serif', color: 'var(--foreground)' }}>
-              Frosted Corner
-            </div>
-            <div className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              {isAdmin ? 'Admin Portal' : 'Dessert Shop'}
-            </div>
-          </div>
+      <div className="mb-4 px-2 flex flex-col items-center text-center">
+        <BrandLogo className="w-36 h-36" />
+        <div className="text-xs font-semibold -mt-1" style={{ color: 'var(--muted-foreground)' }}>
+          {isAdmin ? 'Admin Portal' : 'Dessert Shop'}
         </div>
       </div>
 

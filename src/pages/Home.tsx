@@ -4,6 +4,7 @@ import type { CartItem } from '../App'
 import { isInSeason, menuProducts, type MenuProduct } from '../data/menuProducts'
 import { featuredPromotions as promotions } from '../data/promotions'
 import { cartItemFromBundle, cartItemFromMenuProduct, menuImageUrl } from '../lib/cartItems'
+import BrandLogo from '../components/BrandLogo'
 
 type Props = {
   addToCart: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
@@ -155,6 +156,9 @@ export default function Home({ addToCart, searchQuery }: Props) {
               Ask Our Concierge
             </button>
           </div>
+        </div>
+        <div className="hidden md:flex relative z-10 ml-auto mr-10 flex-shrink-0 items-center justify-center rounded-full w-64 h-64 lg:w-72 lg:h-72 shadow-xl" style={{ background: '#FFFBF5' }}>
+          <BrandLogo className="w-56 h-56 lg:w-64 lg:h-64" />
         </div>
       </section>
 
