@@ -215,7 +215,7 @@ export default function AdminHome() {
       <div className="rounded-2xl border p-5" style={{ background: 'var(--card)', borderColor: 'var(--border)' }}>
         <h3 className="font-bold text-lg mb-3">Franchise Operations Assistant</h3>
         <p className="text-sm mb-3" style={{ color: 'var(--muted-foreground)' }}>
-          Ask about inventory forecasts, promotions, reorder suggestions, and simulated promotion outcomes.
+          Ask for next month's sales forecast, reorder suggestions, promotions, and simulated promotion outcomes.
         </p>
         <AdminChat />
       </div>
@@ -256,7 +256,7 @@ function AdminChat() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send(input)}
-          placeholder="e.g. What should I reorder this week?"
+          placeholder="e.g. Give me next month's forecast"
           aria-label="Message the franchise assistant"
           className="flex-1 px-3 py-2 rounded-xl border"
         />

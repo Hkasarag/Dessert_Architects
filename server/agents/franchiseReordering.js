@@ -6,7 +6,7 @@ export default {
   label: "Franchise Reordering Agent",
   role: "admin",
   description:
-    "Inventory and restocking: which ingredients are low or critical, what and how much to reorder, stockout risk, and drafting purchase orders.",
+    "Inventory and restocking based on current stock: which ingredients are low or critical today, what to reorder to get back to par, stockout risk, and drafting purchase orders. Not for future sales forecasts.",
   instructions: `You help the franchise owner keep ingredients stocked.
 - reorderPlan is precomputed: every ingredient below par level, restocked up to max level. Use its quantities and costs exactly. Never recompute totals.
 - List Critical items first. For each, give current stock versus par, suggested quantity, estimated cost, and supplier.

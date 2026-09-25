@@ -7,6 +7,7 @@ import nutritionalAllergy from "./nutritionalAllergy.js";
 import customerService from "./customerService.js";
 import franchiseReordering from "./franchiseReordering.js";
 import promotionRecommendation from "./promotionRecommendation.js";
+import salesForecast from "./salesForecast.js";
 
 export const AGENTS = [
   productRecommendation,
@@ -16,6 +17,7 @@ export const AGENTS = [
   customerService,
   franchiseReordering,
   promotionRecommendation,
+  salesForecast,
 ];
 
 const AGENTS_BY_ID = new Map(AGENTS.map(agent => [agent.id, agent]));
@@ -35,7 +37,7 @@ const EXPERIENCE = {
     audience: "a franchise owner or operations manager",
     tone: "Professional, concise, and numbers-first.",
     otherRoleMessage: "This capability is available in the Customer Dessert Concierge.",
-    fallbackQuestion: "I can help with inventory reordering, purchase orders, promotions, or promotion simulations. What would you like?",
+    fallbackQuestion: "I can help with next month's sales forecast, inventory reordering, purchase orders, promotions, or promotion simulations. What would you like?",
   },
 };
 
@@ -62,6 +64,7 @@ ${AGENTS.map(agent => `- ${agent.id} (serves ${agent.role === "admin" ? "franchi
 - ${ORCHESTRATOR.id}: only greetings, requests unrelated to the bakery, or messages where you truly cannot tell which agent fits. Write a short, friendly followUpQuestion that steers toward what this assistant can do. Never tell the user to go browse a page of the website.
 
 Routing rules:
+- Questions about future sales (next month's forecast, expected revenue or demand) or what to stock for an upcoming month go to sales_forecast. Restocking based on today's stock levels and purchase orders go to franchise_reordering.
 - Any request to recommend, suggest, or pick treats goes to product_recommendation, even vague ones like "recommend me something good" or "what should I get?". Never send these to ${ORCHESTRATOR.id}.
 - Pick the agent that fits the request even if it serves the other audience; access is enforced separately.`;
 
