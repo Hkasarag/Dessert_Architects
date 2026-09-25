@@ -41,6 +41,10 @@ const EXPERIENCE = {
   },
 };
 
+// An agent's role is "customer", "admin", or "any" (available in every chat).
+const AUDIENCE_LABELS = { customer: "customers", admin: "franchise admins", any: "everyone" };
+const servesRole = (agent, role) => agent.role === "any" || agent.role === role;
+
 const ROUTER_HISTORY_TURNS = 6;
 const MAX_TOOL_ROUNDS = 4;
 
@@ -60,7 +64,7 @@ const routerPrompt = role => `You are the orchestrator behind Frosted Corner bak
 Choose the single specialist agent best suited to the latest user message. Use earlier turns for context: a follow-up such as "make it 20 guests" continues with the same agent.
 
 Agents:
-${AGENTS.map(agent => `- ${agent.id} (serves ${agent.role === "admin" ? "franchise admins" : "customers"}): ${agent.description}`).join("\n")}
+${AGENTS.map(agent => `- ${agent.id} (serves ${AUDIENCE_LABELS[agent.role]}): ${agent.description}`).join("\n")}
 - ${ORCHESTRATOR.id}: only greetings, requests unrelated to the bakery, or messages where you truly cannot tell which agent fits. Write a short, friendly followUpQuestion that steers toward what this assistant can do. Never tell the user to go browse a page of the website.
 
 Routing rules:
@@ -173,8 +177,8 @@ export async function handleChat({ role, history, customerId, cart, tasteProfile
     };
   }
 
-  // Customer and admin agents never serve the other audience.
-  if (agent.role !== role) {
+  // Customer-only and admin-only agents never serve the other audience.
+  if (!servesRole(agent, role)) {
     return {
       reply: EXPERIENCE[role].otherRoleMessage,
       agent: { id: ORCHESTRATOR.id, label: ORCHESTRATOR.label },
