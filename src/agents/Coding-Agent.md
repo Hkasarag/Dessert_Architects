@@ -83,7 +83,10 @@ Admin Agents:
 
 - franchiseReorderingAgent
 - promotionRecommendationAgent
-- salesForecastAgent
+
+Shared Agent (both experiences, at the owner's request):
+
+- salesForecastAgent: next month's sales forecast and the ingredient orders to cover it. Customers can see this sales and inventory data.
 
 Admin Capabilities:
 
