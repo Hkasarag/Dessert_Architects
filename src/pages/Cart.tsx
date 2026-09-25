@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { CartItem } from '../App'
 import { useAuth } from '../context/AuthContext'
 import { promoCodes as PROMO_CODES } from '../data/promotions'
+import { LOYALTY, maxPointsFor, pointsEarnedFor } from '../data/loyalty'
+import { fetchLoyaltyBalance } from '../lib/loyaltyApi'
 
 type Props = {
   items: CartItem[]
@@ -19,6 +21,23 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
   const [promoError, setPromoError] = useState('')
   const [checkoutError, setCheckoutError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null)
+  const [loyaltyLoadError, setLoyaltyLoadError] = useState('')
+  const [pointsInput, setPointsInput] = useState('')
+  const [appliedPoints, setAppliedPoints] = useState(0)
+  const [pointsError, setPointsError] = useState('')
+
+  useEffect(() => {
+    if (!user?.username) return
+    const controller = new AbortController()
+    fetchLoyaltyBalance(user.username, controller.signal)
+      .then(summary => setLoyaltyBalance(summary.balance))
+      .catch(error => {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setLoyaltyLoadError('Loyalty points are unavailable right now.')
+      })
+    return () => controller.abort()
+  }, [user?.username])
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
@@ -28,8 +47,45 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
       : Math.min(appliedPromo.value, subtotal)
     : 0
 
-  const tax = (subtotal - promoDiscount) * 0.08
-  const total = subtotal - promoDiscount + tax
+  // Loyalty points apply after promo codes and before tax; they can't exceed that amount.
+  const afterPromo = subtotal - promoDiscount
+  const maxPointsForOrder = maxPointsFor(afterPromo)
+  const pointsDiscount = appliedPoints * LOYALTY.pointValue
+  const pointsOverLimit = appliedPoints > maxPointsForOrder || (loyaltyBalance !== null && appliedPoints > loyaltyBalance)
+
+  const tax = Math.max(0, afterPromo - pointsDiscount) * 0.08
+  const total = Math.max(0, afterPromo - pointsDiscount) + tax
+  const pointsToEarn = appliedPoints > 0 ? 0 : pointsEarnedFor(total)
+
+  const formatPoints = (points: number) => points.toLocaleString('en-US')
+
+  const applyPoints = (requested: string) => {
+    const trimmed = requested.trim()
+    if (!/^\d+$/.test(trimmed)) {
+      setPointsError('Enter a whole number of points.')
+      return
+    }
+    const points = Number(trimmed)
+    if (points <= 0) {
+      setPointsError('Enter at least 1 point.')
+      return
+    }
+    if (loyaltyBalance === null) {
+      setPointsError('Your points balance is still loading. Please try again.')
+      return
+    }
+    if (points > loyaltyBalance) {
+      setPointsError(`You only have ${formatPoints(loyaltyBalance)} points.`)
+      return
+    }
+    if (points > maxPointsForOrder) {
+      setPointsError(`This order can use at most ${formatPoints(maxPointsForOrder)} points ($${(maxPointsForOrder * LOYALTY.pointValue).toFixed(2)}).`)
+      return
+    }
+    setAppliedPoints(points)
+    setPointsInput('')
+    setPointsError('')
+  }
 
   const applyPromo = () => {
     const code = promoInput.trim().toUpperCase()
@@ -44,6 +100,10 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
   }
 
   const submitOrder = async () => {
+    if (pointsOverLimit) {
+      setCheckoutError('Adjust the loyalty points applied to this order before checking out.')
+      return
+    }
     setCheckoutError('')
     setIsSubmitting(true)
 
@@ -53,9 +113,10 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
       createdAt: new Date().toISOString(),
       status: 'Pending',
       subscriptionType: items.some(item => item.isSubscription) ? 'Subscription' : 'None',
-      subtotal: subtotal - promoDiscount,
+      subtotal: afterPromo,
       tax,
       total,
+      loyaltyPointsRedeemed: appliedPoints,
       items: items.map(item => ({
         productId: String(item.id),
         productName: item.name,
@@ -78,7 +139,13 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
       }
 
       clearCart()
-      navigate('/thankyou')
+      navigate('/thankyou', {
+        state: {
+          pointsEarned: result.loyaltyPointsEarned ?? 0,
+          pointsRedeemed: result.loyaltyPointsRedeemed ?? 0,
+          pointsBalance: result.loyaltyBalance ?? null,
+        },
+      })
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Unable to create the order.')
     } finally {
@@ -203,6 +270,83 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
                 )}
               </div>
 
+              {/* Loyalty Points */}
+              <div className="mb-5">
+                <div className="flex items-baseline justify-between mb-2">
+                  <label htmlFor="loyalty-points" className="text-sm font-semibold">Loyalty Points</label>
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                    {loyaltyBalance === null
+                      ? (loyaltyLoadError || 'Loading balance…')
+                      : `You have ${formatPoints(loyaltyBalance)} pts ($${(loyaltyBalance * LOYALTY.pointValue).toFixed(2)})`}
+                  </span>
+                </div>
+                {appliedPoints > 0 ? (
+                  <div
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm"
+                    style={pointsOverLimit
+                      ? { background: '#FFF0F0', borderColor: '#E74C3C55' }
+                      : { background: '#F0FFF4', borderColor: '#4CAF5055' }}
+                  >
+                    <div>
+                      <div className={`font-bold ${pointsOverLimit ? 'text-red-700' : 'text-green-700'}`}>
+                        {pointsOverLimit ? '⚠' : '✓'} {formatPoints(appliedPoints)} points applied
+                      </div>
+                      <div className={`text-xs ${pointsOverLimit ? 'text-red-600' : 'text-green-600'}`}>
+                        −${pointsDiscount.toFixed(2)} off this order
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setAppliedPoints(0); setPointsError('') }}
+                      className="text-xs text-red-400 font-bold hover:underline ml-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      id="loyalty-points"
+                      type="text"
+                      inputMode="numeric"
+                      value={pointsInput}
+                      onChange={e => { setPointsInput(e.target.value); setPointsError('') }}
+                      onKeyDown={e => e.key === 'Enter' && applyPoints(pointsInput)}
+                      placeholder="Points to use"
+                      disabled={!loyaltyBalance}
+                      className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border text-sm outline-none disabled:opacity-60"
+                      style={{ background: 'var(--muted)', borderColor: pointsError ? '#E74C3C' : 'var(--border)', color: 'var(--foreground)' }}
+                    />
+                    <button
+                      onClick={() => applyPoints(pointsInput)}
+                      disabled={!loyaltyBalance}
+                      className="px-4 py-2.5 rounded-xl font-bold text-sm text-white transition hover:opacity-90 disabled:opacity-40"
+                      style={{ background: 'var(--primary)' }}
+                    >
+                      Use
+                    </button>
+                  </div>
+                )}
+                {appliedPoints === 0 && !!loyaltyBalance && maxPointsForOrder > 0 && (
+                  <button
+                    className="text-xs font-semibold mt-1.5 hover:underline"
+                    style={{ color: 'var(--primary)' }}
+                    onClick={() => applyPoints(String(Math.min(loyaltyBalance, maxPointsForOrder)))}
+                  >
+                    Use max ({formatPoints(Math.min(loyaltyBalance, maxPointsForOrder))} pts)
+                  </button>
+                )}
+                {pointsError && (
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: '#E74C3C' }} role="alert">{pointsError}</p>
+                )}
+                {pointsOverLimit && (
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: '#E74C3C' }} role="alert">
+                    {loyaltyBalance !== null && appliedPoints > loyaltyBalance
+                      ? `You only have ${formatPoints(loyaltyBalance)} points.`
+                      : `Your order total changed. This order can now use at most ${formatPoints(maxPointsForOrder)} points.`}
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span style={{ color: 'var(--muted-foreground)' }}>Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
@@ -212,6 +356,12 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
                   <div className="flex justify-between">
                     <span style={{ color: 'var(--muted-foreground)' }}>Promo ({appliedPromo?.code})</span>
                     <span className="font-semibold text-green-600">−${promoDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                {appliedPoints > 0 && (
+                  <div className="flex justify-between">
+                    <span style={{ color: 'var(--muted-foreground)' }}>Loyalty points ({formatPoints(appliedPoints)})</span>
+                    <span className="font-semibold text-green-600">−${pointsDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -225,12 +375,17 @@ export default function Cart({ items, updateQty, removeItem, clearCart }: Props)
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
+                <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                  {appliedPoints > 0
+                    ? 'Orders paid with loyalty points don’t earn new points.'
+                    : `You’ll earn ${formatPoints(pointsToEarn)} loyalty points with this order.`}
+                </p>
               </div>
 
               <button
                 onClick={submitOrder}
-                disabled={isSubmitting}
-                className="w-full mt-5 py-4 rounded-2xl font-bold text-lg text-white transition hover:opacity-90 shadow-md mb-3"
+                disabled={isSubmitting || pointsOverLimit}
+                className="w-full mt-5 py-4 rounded-2xl font-bold text-lg text-white transition hover:opacity-90 shadow-md mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ background: 'var(--primary)' }}
               >
                 {isSubmitting ? 'Submitting...' : 'Checkout'}

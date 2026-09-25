@@ -39,13 +39,10 @@ export default function Concierge({ cartItems }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto px-6 py-8" style={{ height: 'calc(100vh - 64px)' }}>
-      <div className="mb-6 text-center">
-        <div className="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-md" style={{ background: 'var(--primary)' }}>
-          🥐
-        </div>
+    <div className="flex flex-col h-full max-w-5xl mx-auto px-4 sm:px-6 py-5">
+      <div className="mb-4 text-center">
         <h1 className="text-3xl font-bold" style={{ fontFamily: 'Fraunces, serif' }}>AI Dessert Concierge</h1>
-        <p className="mt-2 text-base" style={{ color: 'var(--muted-foreground)' }}>
+        <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
           Routed by an AI orchestrator to specialized bakery agents for recommendations, party planning, cart help, dietary guidance, and support.
         </p>
       </div>

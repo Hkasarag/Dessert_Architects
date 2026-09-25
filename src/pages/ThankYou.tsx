@@ -1,9 +1,10 @@
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function ThankYou() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const loyalty = (useLocation().state ?? {}) as { pointsEarned?: number; pointsRedeemed?: number; pointsBalance?: number | null }
   const orderNum = `ORD-${Math.floor(2848 + Math.random() * 100)}`
 
   return (
@@ -34,6 +35,20 @@ export default function ThankYou() {
           <span style={{ color: 'var(--muted-foreground)' }}>Order #</span>
           <span>{orderNum}</span>
         </div>
+
+        {(loyalty.pointsEarned || loyalty.pointsRedeemed) ? (
+          <div
+            className="rounded-2xl p-4 mb-4 text-sm font-semibold"
+            style={{ background: '#F0FFF4', color: '#2E7D32' }}
+          >
+            {loyalty.pointsRedeemed
+              ? `You used ${loyalty.pointsRedeemed.toLocaleString('en-US')} loyalty points on this order.`
+              : `⭐ You earned ${(loyalty.pointsEarned ?? 0).toLocaleString('en-US')} loyalty points!`}
+            {typeof loyalty.pointsBalance === 'number' && (
+              <span className="block font-normal mt-1">New balance: {loyalty.pointsBalance.toLocaleString('en-US')} points</span>
+            )}
+          </div>
+        ) : null}
 
         <div
           className="rounded-2xl border p-5 text-left mb-8"

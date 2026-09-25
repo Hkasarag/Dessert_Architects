@@ -5,6 +5,7 @@ import ordersRouter from "./routes/orders.js";
 import inventoryRouter, { createInventory } from "./routes/inventory.js";
 import chatRouter from "./routes/chat.js";
 import analyticsRouter from "./routes/analytics.js";
+import loyaltyRouter from "./routes/loyalty.js";
 
 const PORT = process.env.PORT || 5050;
 const app = express();
@@ -16,6 +17,7 @@ app.post("/orders", createInventory);
 app.use("/orders", ordersRouter);
 app.use("/chat", chatRouter);
 app.use("/analytics", analyticsRouter);
+app.use("/loyalty", loyaltyRouter);
 
 // start the Express server
 app.listen(PORT, () => {

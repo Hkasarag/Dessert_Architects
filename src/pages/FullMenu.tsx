@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { CartItem } from '../App'
 import { isInSeason, menuProducts } from '../data/menuProducts'
+import { cartItemFromMenuProduct, menuImageUrl } from '../lib/cartItems'
 
 type Props = { addToCart: (item: Omit<CartItem, 'quantity'>) => void; searchQuery?: string }
 
@@ -246,13 +247,7 @@ export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
 )
 
   const handleAdd = (p: typeof allProducts[0]) => {
-    addToCart({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      unitCost: p.unitCost,
-      image: `https://images.unsplash.com/${p.image}?w=200&h=200&fit=crop&auto=format`,
-    })
+    addToCart(cartItemFromMenuProduct(p))
     setAdded(p.id)
     setTimeout(() => setAdded(null), 1800)
   }
@@ -299,7 +294,7 @@ export default function FullMenu({ addToCart, searchQuery = '' }: Props) {
           >
             <div className="h-36 bg-amber-50 overflow-hidden">
               <img
-                src={`https://images.unsplash.com/${p.image}?w=400&h=280&fit=crop&auto=format`}
+                src={menuImageUrl(p.image, 400, 280)}
                 alt={p.name}
                 className="w-full h-full object-cover"
               />

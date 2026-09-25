@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { CartItem } from '../App'
 import { useAuth } from '../context/AuthContext'
+import { isInSeason, menuProducts } from '../data/menuProducts'
+import { featuredPromotions } from '../data/promotions'
+import { LOYALTY } from '../data/loyalty'
+import { bundleCartId, cartItemFromBundle, cartItemFromMenuProduct } from '../lib/cartItems'
+import { fetchLoyaltyBalance } from '../lib/loyaltyApi'
+import AdminProfile from './AdminProfile'
+
+type AddToCart = (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
+
+type Props = {
+  addToCart: AddToCart
+}
+
+type OrderItem = { productId: string; productName: string; quantity: number }
 
 type ProfileOrder = {
   id: string
   date: string
-  items: string[]
+  items: OrderItem[]
   total: number
 }
 
@@ -13,14 +28,13 @@ type OrderRecord = {
   orderId?: string
   createdAt?: string
   total?: number
-  items?: Array<{ productName?: string; quantity?: number }>
+  items?: Array<{ productId?: string; productName?: string; quantity?: number }>
 }
 
-type InventoryRecord = {
-  inventoryTransactionId?: string
-  transactionDate?: string
-  totalCost?: number
-  lineItems?: Array<{ ingredientName?: string; quantity?: number; unitOfMeasure?: string }>
+type ReorderStatus = {
+  orderId: string
+  addedUnits: number
+  skipped: string[]
 }
 
 const formatHistoryDate = (value?: string) => {
@@ -34,18 +48,49 @@ const formatHistoryDate = (value?: string) => {
 const normalizeCustomerOrder = (order: OrderRecord): ProfileOrder => ({
   id: order.orderId || 'Order',
   date: formatHistoryDate(order.createdAt),
-  items: (order.items || []).map(item => `${item.productName || 'Item'} ×${item.quantity || 0}`),
+  items: (order.items || []).map(item => ({
+    productId: String(item.productId ?? ''),
+    productName: item.productName || 'Item',
+    quantity: Number(item.quantity) || 0,
+  })),
   total: Number(order.total || 0),
 })
 
-const normalizeInventoryOrder = (transaction: InventoryRecord): ProfileOrder => ({
-  id: transaction.inventoryTransactionId || 'Inventory transaction',
-  date: formatHistoryDate(transaction.transactionDate),
-  items: (transaction.lineItems || []).map(item =>
-    `${item.ingredientName || 'Ingredient'} ×${item.quantity || 0} ${item.unitOfMeasure || ''}`.trim()
-  ),
-  total: Number(transaction.totalCost || 0),
-})
+const displayName = (name: string) => name.replace(/[^\p{L}\p{N}\s'&-]/gu, '').trim()
+
+/** Adds an old order's items to the cart at today's prices. Returns what was added and skipped. */
+function reorderItems(order: ProfileOrder, addToCart: AddToCart): ReorderStatus {
+  let addedUnits = 0
+  const skipped: string[] = []
+
+  for (const item of order.items) {
+    if (item.quantity <= 0) continue
+    const id = Number(item.productId)
+    const product = menuProducts.find(p => p.id === id)
+    if (product) {
+      if (!isInSeason(product.season)) {
+        skipped.push(`${displayName(product.name)} (out of season)`)
+        continue
+      }
+      addToCart(cartItemFromMenuProduct(product), item.quantity)
+      addedUnits += item.quantity
+      continue
+    }
+
+    const bundle = featuredPromotions.find(p => bundleCartId(p) === id)
+    if (bundle) {
+      addToCart(cartItemFromBundle(bundle), item.quantity)
+      addedUnits += item.quantity
+      continue
+    }
+
+    skipped.push(id < 0
+      ? `${displayName(item.productName)} (memberships aren't reordered)`
+      : `${displayName(item.productName)} (no longer on the menu)`)
+  }
+
+  return { orderId: order.id, addedUnits, skipped }
+}
 
 function formatDob(dob: string) {
   if (!dob) return '—'
@@ -58,21 +103,34 @@ function formatDob(dob: string) {
   }
 }
 
-export default function Profile() {
+export default function Profile({ addToCart }: Props) {
+  const { user } = useAuth()
+  return user?.role === 'admin' ? <AdminProfile /> : <CustomerProfile addToCart={addToCart} />
+}
+
+function CustomerProfile({ addToCart }: Props) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [orderHistory, setOrderHistory] = useState<ProfileOrder[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
   const [historyError, setHistoryError] = useState('')
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null)
+  const [reorderStatus, setReorderStatus] = useState<ReorderStatus | null>(null)
+
+  useEffect(() => {
+    if (!user?.username) return
+    const controller = new AbortController()
+    fetchLoyaltyBalance(user.username, controller.signal)
+      .then(summary => setLoyaltyBalance(summary.balance))
+      .catch(() => { /* the Rewards card shows a dash when points can't load */ })
+    return () => controller.abort()
+  }, [user?.username])
 
   useEffect(() => {
     if (!user) return
 
     const controller = new AbortController()
-    const isAdmin = user.role === 'admin'
-    const endpoint = isAdmin
-      ? 'http://localhost:5050/inventory?limit=3'
-      : `http://localhost:5050/orders?customerId=${encodeURIComponent(user.username)}&limit=3`
+    const endpoint = `http://localhost:5050/orders?customerId=${encodeURIComponent(user.username)}&limit=3`
 
     const loadHistory = async () => {
       setHistoryLoading(true)
@@ -83,10 +141,7 @@ export default function Profile() {
         const result = await response.json()
         if (!response.ok) throw new Error(result.error || 'Unable to load order history.')
 
-        const history = isAdmin
-          ? (result as InventoryRecord[]).map(normalizeInventoryOrder)
-          : (result as OrderRecord[]).map(normalizeCustomerOrder)
-        setOrderHistory(history.slice(0, 3))
+        setOrderHistory((result as OrderRecord[]).map(normalizeCustomerOrder).slice(0, 3))
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
         setHistoryError(error instanceof Error ? error.message : 'Unable to load order history.')
@@ -203,9 +258,11 @@ export default function Profile() {
             className="rounded-2xl p-5 mb-5"
             style={{ background: 'linear-gradient(135deg, #6BBFD8 0%, #4AA8C8 100%)', color: 'white' }}
           >
-            <div className="text-3xl font-bold mb-1">1,240</div>
+            <div className="text-3xl font-bold mb-1">{loyaltyBalance === null ? '—' : loyaltyBalance.toLocaleString('en-US')}</div>
             <div className="text-sm opacity-85">Loyalty Points</div>
-            <div className="mt-3 text-sm opacity-85">= $12.40 in bakery credit</div>
+            <div className="mt-3 text-sm opacity-85">
+              = ${((loyaltyBalance ?? 0) * LOYALTY.pointValue).toFixed(2)} in bakery credit
+            </div>
           </div>
           <div className="space-y-2 text-sm">
             {[['Total Savings', '$48.60'], ['Treats Ordered', '87 items'], ['Consecutive Weeks', '14 weeks']].map(([k, v]) => (
@@ -261,13 +318,29 @@ export default function Profile() {
               <div>
                 <div className="font-bold text-sm">{order.id}</div>
                 <div className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>{order.date}</div>
-                <div className="text-sm mt-1">{order.items.join(' · ')}</div>
+                <div className="text-sm mt-1">{order.items.map(item => `${item.productName} ×${item.quantity}`).join(' · ')}</div>
+                {reorderStatus?.orderId === order.id && (
+                  <div className="text-xs mt-2" role="status">
+                    {reorderStatus.addedUnits > 0 ? (
+                      <span className="font-semibold text-green-700">
+                        ✓ Added {reorderStatus.addedUnits} item{reorderStatus.addedUnits === 1 ? '' : 's'} to your cart.{' '}
+                        <button className="underline" style={{ color: 'var(--primary)' }} onClick={() => navigate('/cart')}>View cart</button>
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-red-600">Nothing from this order could be added.</span>
+                    )}
+                    {reorderStatus.skipped.length > 0 && (
+                      <span className="block mt-1" style={{ color: 'var(--muted-foreground)' }}>Skipped: {reorderStatus.skipped.join(', ')}</span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="text-right">
                 <div className="font-bold">${order.total.toFixed(2)}</div>
                 <button
                   className="mt-2 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition hover:opacity-90"
                   style={{ background: 'var(--primary)' }}
+                  onClick={() => setReorderStatus(reorderItems(order, addToCart))}
                 >
                   Reorder
                 </button>

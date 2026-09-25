@@ -39,6 +39,8 @@ The frontend and backend run as two separate processes. Pages that save or load 
 ### Frontend (`src/`)
 
 - `App.tsx` owns the router, the cart state (`CartItem[]`), and the global search query, and passes them down as props. There is no state library. `AuthGate` shows Login/SignUp until a user exists.
+- `pages/Profile.tsx` renders `AdminProfile.tsx` for admins, with franchise details, business snapshot, inventory alerts, suppliers, and bulk orders. Customers get the original profile, with real loyalty points and a Reorder button that re-adds an old order's in-season items at today's prices. Store details live in `src/data/storeInfo.ts`.
+- The top search bar in `TopNav.tsx` only appears for customers on the Home page, the only page it filters.
 - `context/ChatContext.tsx` holds both chat conversations (the customer concierge and the admin franchise chat) above the routes. Conversations survive page navigation and are cleared on sign-out. Chat pages read and send through `useChat(chatId)` instead of keeping local message state.
 - Routes are role-gated in `App.tsx`: `/` renders `AdminHome` for admins and `Home` for customers. `/analytics` and `/inventory` exist only for admins. `Sidebar.tsx` shows a different nav per role, so update both when adding a page.
 - `src/data/menuProducts.ts` is the customer menu used by Home, FullMenu, and Analytics (numeric ids, `price`, `unitCost`, `season`, with `isInSeason()` filtering seasonal items).
@@ -65,6 +67,7 @@ Plain ESM JavaScript Express 5 app using the native `mongodb` driver (mongoose i
 - `GET /orders?customerId=&limit=` and `POST /orders` use the `orders` collection. Customer orders use the username as `customerId`. Every item needs `unitCost > 0`, so keep `unitCost` on menu products and cart items.
 - `GET /inventory?locationId=&limit=` and `POST /inventory` use the `inventory` collection for ingredient purchase transactions (default `locationId` is `ATL001`).
 - `GET /analytics/sales?month=YYYY-MM` powers the admin Analytics page. `server/analytics/salesAnalytics.js` parses the newest CSV in `server/sales_data/` once, then caches each month's KPIs, 12-month trends, product popularity, subscription mix, insights, and inventory estimates. A partial latest month is compared with the same days of the previous month. Ingredient runout estimates use the last 28 days of sales times the per-item amounts in `server/analytics/recipeUsage.js`, which are planning assumptions, not real recipes.
+- `GET /loyalty?customerId=` returns a customer's loyalty point balance, derived from their orders (`server/loyalty.js`). Rules live in `src/data/loyalty.ts`: 10 points per $1 of order total, and 100 points = $1. `POST /orders` accepts `loyaltyPointsRedeemed`, rejects more points than the balance or the pre-tax amount after promos, and records `loyaltyPointsEarned`. Orders that redeem points earn none, and older orders without loyalty fields count as earning on their total.
 - `POST /chat` is the agent orchestrator described above. It returns 503 when Azure OpenAI isn't configured.
 - **Routing quirk:** `POST /orders` first runs `createInventory`. If the body has a `lineItems` array, it is stored as an inventory transaction; otherwise it falls through to the customer order router. `AdminHome` bulk orders rely on this.
 - List endpoints default to 3 results, capped at 50.

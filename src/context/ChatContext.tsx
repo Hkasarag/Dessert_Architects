@@ -42,7 +42,7 @@ const initialConversations = (): Record<ChatId, Conversation> => ({
     messages: [{
       id: 0,
       role: 'assistant',
-      text: "👋 Hello! I'm your bakery concierge. I can recommend treats, plan desserts for a party, suggest add-ons for your cart, help with allergies and dietary needs, or check on an order.",
+      text: "👋 Hello! I'm your dessert concierge. I can recommend treats, plan desserts for a party, suggest add-ons for your cart, help with allergies and dietary needs, or check on an order.",
       time: formatChatTime(),
       agentLabel: 'Orchestrator Agent',
       isWelcome: true,
