@@ -90,12 +90,12 @@ export default function Login({ onGoSignup }: Props) {
             </button>
           </form>
 
-          <div className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
+          {/* <div className="mt-4 text-center text-sm" style={{ color: 'var(--muted-foreground)' }}>
             <span className="text-xs">Demo: </span>
             <code className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--muted)' }}>margaret / password123</code>
             <span className="text-xs mx-2">or</span>
             <code className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--muted)' }}>admin / admin123</code>
-          </div>
+          </div> */}
         </div>
 
         <div className="text-center mt-6">

@@ -48,16 +48,16 @@ export type SignupData = {
 // Seeded accounts so the demo works out of the box
 const SEED_ACCOUNTS: Array<SignupData & { profile: UserProfile }> = [
   {
-    username: 'margaret',
-    password: 'password123',
-    email: 'margaret@email.com',
+    username: 'Ben22',
+    password: 'pwd123',
+    email: 'Ben@gmail.com',
     phone: '+1 (555) 832-4491',
     dob: '1960-04-14',
     address: '42 Maple Lane, Springfield, IL 62701',
     role: 'customer',
     profile: {
-      username: 'margaret',
-      email: 'margaret@email.com',
+      username: 'Ben22',
+      email: 'Ben@gmail.com',
       phone: '+1 (555) 832-4491',
       dob: '1960-04-14',
       address: '42 Maple Lane, Springfield, IL 62701',
